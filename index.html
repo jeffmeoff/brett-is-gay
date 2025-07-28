@@ -19,9 +19,18 @@
             overflow: hidden; /* Prevent scrolling on the body */
             touch-action: none;
         }
+        #app-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 4rem; /* Height of the nav bar */
+            overflow: hidden;
+        }
         .page {
             display: none; /* Hide pages by default */
-            height: calc(100vh - 4rem); /* Full height minus nav bar */
+            width: 100%;
+            height: 100%;
             overflow-y: auto;
         }
         .page.active {
@@ -112,7 +121,7 @@
         @keyframes bounce { 0%, 100% { transform: scale(1.05); } 50% { transform: scale(0.85); } }
     </style>
 </head>
-<body class="pb-16"> <!-- Padding at bottom for the nav bar -->
+<body>
 
     <!-- Page Container -->
     <div id="app-container">
@@ -129,7 +138,7 @@
                 </div>
             </header>
             <main id="feed-container" class="max-w-lg mx-auto mt-6 pb-12">
-                <!-- Photo posts will be injected here by JavaScript -->
+                <p class="text-center text-gray-500">Loading feed...</p>
             </main>
         </div>
 
@@ -247,761 +256,827 @@
             Games
         </button>
     </nav>
+    
+    <script type="module">
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        
-        // --- MASTER PAGE NAVIGATION ---
-        const navButtons = document.querySelectorAll('.nav-button');
-        const pages = document.querySelectorAll('.page');
-        let activeGameLoop = null;
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // --- Firebase Setup ---
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'brett-photo-app';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            
+            let db, auth;
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-        function showPage(pageId) {
-            if (activeGameLoop) {
-                cancelAnimationFrame(activeGameLoop);
-                activeGameLoop = null;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                const feedContainer = document.getElementById('feed-container');
+                if(feedContainer) feedContainer.innerHTML = `<p class="text-center text-red-500">Could not connect to the database.</p>`;
             }
 
-            pages.forEach(page => {
-                page.classList.toggle('active', page.id === pageId);
-            });
+            // --- MASTER PAGE NAVIGATION ---
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pages = document.querySelectorAll('.page');
+            let activeGameLoop = null;
+
+            function showPage(pageId) {
+                if (activeGameLoop) {
+                    cancelAnimationFrame(activeGameLoop);
+                    activeGameLoop = null;
+                }
+
+                pages.forEach(page => {
+                    page.classList.toggle('active', page.id === pageId);
+                });
+                navButtons.forEach(button => {
+                    const isSelected = button.dataset.page === pageId;
+                    button.classList.toggle('text-blue-500', isSelected);
+                    button.classList.toggle('text-gray-500', !isSelected);
+                });
+                
+                if (pageId === 'games-page') {
+                    showGameSelection();
+                }
+            }
+
             navButtons.forEach(button => {
-                const isSelected = button.dataset.page === pageId;
-                button.classList.toggle('text-blue-500', isSelected);
-                button.classList.toggle('text-gray-500', !isSelected);
-            });
-            
-            if (pageId === 'games-page') {
-                showGameSelection();
-            }
-        }
-
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                showPage(button.dataset.page);
-            });
-        });
-
-        // --- FEED APP INITIALIZATION ---
-        function initFeedApp() {
-            const photoData = [
-                { id: 1, imageUrl: 'https://placehold.co/600x600/3498db/ffffff?text=Brett+at+the+Park', caption: 'A beautiful day at the park! Brett was having the time of his life.', timestamp: 'July 26, 2025', comments: [{ user: 'Sarah', text: 'Looks so happy!' }, { user: 'Mike', text: 'What a great photo!' }] },
-                { id: 2, imageUrl: 'https://placehold.co/600x600/e74c3c/ffffff?text=Nap+Time', caption: 'Someone is all tuckered out after a long day of adventures.', timestamp: 'July 25, 2025', comments: [] },
-                { id: 3, imageUrl: 'https://placehold.co/600x600/2ecc71/ffffff?text=Beach+Day', caption: 'Brett enjoying the sun and sand. His first time seeing the ocean!', timestamp: 'July 22, 2025', comments: [{ user: 'Grandma', text: 'My handsome boy! ❤️' }] },
-                { id: 4, imageUrl: 'https://placehold.co/600x600/9b59b6/ffffff?text=Birthday+Fun', caption: 'Celebrating another amazing year! Happy Birthday, Brett!', timestamp: 'July 19, 2025', comments: [] },
-                { id: 5, imageUrl: 'https://placehold.co/600x600/f1c40f/ffffff?text=Goofy+Face', caption: 'Caught him making a silly face. This one always makes me laugh.', timestamp: 'July 15, 2025', comments: [{ user: 'Dave', text: 'Haha, classic Brett.' }] }
-            ];
-            const feedContainer = document.getElementById('feed-container');
-
-            function renderFeed() {
-                if (!feedContainer) return;
-                feedContainer.innerHTML = '';
-                photoData.forEach(post => {
-                    const postElement = createPostElement(post);
-                    feedContainer.appendChild(postElement);
+                button.addEventListener('click', () => {
+                    showPage(button.dataset.page);
                 });
-            }
-
-            function createPostElement(post) {
-                const article = document.createElement('article');
-                article.className = 'post-card bg-white rounded-lg mb-8 shadow-sm';
-                article.dataset.postId = post.id;
-                const header = `<div class="flex items-center p-4 border-b border-gray-200"><img src="https://placehold.co/40x40/E8AA42/FFFFFF?text=B" alt="Brett's Avatar" class="w-10 h-10 rounded-full"><div class="ml-3"><p class="font-bold text-sm text-gray-800">brett_official</p><p class="text-xs text-gray-500">${post.timestamp}</p></div></div>`;
-                const image = `<img src="${post.imageUrl}" alt="${post.caption}" class="w-full h-auto">`;
-                const actionsAndCaption = `<div class="p-4"><p class="text-sm text-gray-800"><span class="font-bold">brett_official</span> ${post.caption}</p></div>`;
-                const commentsContainer = document.createElement('div');
-                commentsContainer.className = 'comment-section border-t border-gray-200 px-4 pt-2 pb-1 max-h-48 overflow-y-auto';
-                post.comments.forEach(comment => {
-                    const commentElement = document.createElement('p');
-                    commentElement.className = 'text-sm mb-1';
-                    commentElement.innerHTML = `<span class="font-semibold text-gray-700">${comment.user}</span> ${comment.text}`;
-                    commentsContainer.appendChild(commentElement);
-                });
-                const commentForm = `<div class="border-t border-gray-200 p-3"><form class="comment-form flex"><input type="text" name="username" class="comment-input text-sm w-1/3 border border-gray-300 rounded-l-md px-3 py-2 transition focus:border-gray-500" placeholder="Your Name" required><input type="text" name="comment" class="comment-input text-sm w-2/3 border-t border-b border-gray-300 px-3 py-2 transition focus:border-gray-500" placeholder="Add a comment..." required><button type="submit" class="bg-blue-500 text-white font-semibold text-sm px-4 rounded-r-md hover:bg-blue-600 transition">Post</button></form></div>`;
-                article.innerHTML = header + image + actionsAndCaption;
-                article.appendChild(commentsContainer);
-                article.innerHTML += commentForm;
-                return article;
-            }
-
-            function handleCommentSubmit(event) {
-                event.preventDefault();
-                const form = event.target;
-                const postId = form.closest('article').dataset.postId;
-                const usernameInput = form.querySelector('input[name="username"]');
-                const commentInput = form.querySelector('input[name="comment"]');
-                const newComment = { user: usernameInput.value.trim(), text: commentInput.value.trim() };
-                const post = photoData.find(p => p.id == postId);
-                if (post) {
-                    post.comments.push(newComment);
-                }
-                renderFeed();
-            }
-
-            renderFeed();
-            feedContainer.addEventListener('submit', function(event) {
-                if (event.target.classList.contains('comment-form')) {
-                    handleCommentSubmit(event);
-                }
             });
-        }
 
-        // --- GOLF CADDIE APP INITIALIZATION ---
-        function initGolfApp() {
-            const golfAppContainer = document.getElementById('golf-app-container');
-            if (!golfAppContainer) return;
+            // --- FEED APP INITIALIZATION ---
+            async function initFeedApp() {
+                if (!db) return; // Don't run if Firebase failed
 
-            let state = { clubs: [], scorecard: {}, history: [], confidence: 0, roundToDeleteIndex: null };
-            const defaultClubs = [ { name: 'Driver', min: 200, max: 220, order: 1 }, { name: '4H', min: 185, max: 200, order: 2 }, { name: '6 Iron', min: 145, max: 160, order: 3 }, { name: '7 Iron', min: 140, max: 155, order: 4 }, { name: '8 Iron', min: 135, max: 150, order: 5 }, { name: '9 Iron', min: 130, max: 145, order: 6 }, { name: 'PW', min: 110, max: 135, order: 7 }, { name: 'A/GW', min: 100, max: 120, order: 8 } ];
-            const createDefaultScorecard = () => ({ scores: Array(18).fill(0), pars: Array(18).fill(4), putts: Array(18).fill(0), roundType: 18 });
-            
-            const vibrate = () => { if ('vibrate' in navigator) navigator.vibrate(10); };
-            
-            const loadData = () => { try { state.clubs = JSON.parse(localStorage.getItem('golfCaddieClubs')) || defaultClubs; state.scorecard = JSON.parse(localStorage.getItem('golfCaddieScorecard')) || createDefaultScorecard(); if (!state.scorecard.putts || state.scorecard.putts.length !== 18) { state.scorecard.putts = Array(18).fill(0); } state.history = JSON.parse(localStorage.getItem('golfCaddieHistory')) || []; } catch (e) { console.error("Error loading data:", e); state.clubs = defaultClubs; state.scorecard = createDefaultScorecard(); state.history = []; } };
-            const saveData = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error(`Error saving ${key}:`, e); } };
-            const saveClubs = () => { state.clubs.sort((a, b) => b.max - a.max); state.clubs.forEach((club, index) => club.order = index + 1); saveData('golfCaddieClubs', state.clubs); };
-            const saveScorecard = () => saveData('golfCaddieScorecard', state.scorecard);
-            const saveHistory = () => saveData('golfCaddieHistory', state.history);
+                const feedContainer = document.getElementById('feed-container');
+                const postsCollectionRef = collection(db, `artifacts/${appId}/public/data/posts`);
 
-            const showModal = (modalId) => document.getElementById(modalId).classList.add('active');
-            const hideModal = (modalId) => document.getElementById(modalId).classList.remove('active');
+                const initialPhotoData = [
+                    { id: 1, imageUrl: 'https://placehold.co/600x600/3498db/ffffff?text=Brett+at+the+Park', caption: 'A beautiful day at the park! Brett was having the time of his life.', timestamp: 'July 26, 2025', comments: [{ user: 'Sarah', text: 'Looks so happy!' }, { user: 'Mike', text: 'What a great photo!' }] },
+                    { id: 2, imageUrl: 'https://placehold.co/600x600/e74c3c/ffffff?text=Nap+Time', caption: 'Someone is all tuckered out after a long day of adventures.', timestamp: 'July 25, 2025', comments: [] },
+                    { id: 3, imageUrl: 'https://placehold.co/600x600/2ecc71/ffffff?text=Beach+Day', caption: 'Brett enjoying the sun and sand. His first time seeing the ocean!', timestamp: 'July 22, 2025', comments: [{ user: 'Grandma', text: 'My handsome boy! ❤️' }] },
+                    { id: 4, imageUrl: 'https://placehold.co/600x600/9b59b6/ffffff?text=Birthday+Fun', caption: 'Celebrating another amazing year! Happy Birthday, Brett!', timestamp: 'July 19, 2025', comments: [] },
+                    { id: 5, imageUrl: 'https://placehold.co/600x600/f1c40f/ffffff?text=Goofy+Face', caption: 'Caught him making a silly face. This one always makes me laugh.', timestamp: 'July 15, 2025', comments: [{ user: 'Dave', text: 'Haha, classic Brett.' }] }
+                ];
 
-            function displayGolfView(html) {
-                golfAppContainer.innerHTML = html;
-                const distanceInput = golfAppContainer.querySelector('#distance-input');
-                if (distanceInput) {
-                    distanceInput.addEventListener('input', findBestClub);
-                }
-                const confidenceSlider = golfAppContainer.querySelector('#confidence-slider');
-                 if(confidenceSlider) {
-                    const normalButton = confidenceSlider.querySelector('button[data-value="0"]');
-                    if(normalButton) {
-                        normalButton.classList.add('bg-green-500', 'text-gray-900');
-                        normalButton.classList.remove('text-gray-300', 'hover:bg-gray-600');
+                // Check if we need to seed the database
+                const initialDocs = await getDocs(postsCollectionRef);
+                if (initialDocs.empty) {
+                    for (const post of initialPhotoData) {
+                        await setDoc(doc(postsCollectionRef, post.id.toString()), post);
                     }
-                    confidenceSlider.addEventListener('click', (e) => {
-                        const button = e.target.closest('button');
-                        if(button) {
-                            vibrate();
-                            state.confidence = parseInt(button.dataset.value, 10);
-                            confidenceSlider.querySelectorAll('button').forEach(btn => {
-                                btn.classList.remove('bg-green-500', 'text-gray-900');
-                                btn.classList.add('text-gray-300', 'hover:bg-gray-600');
-                            });
-                            button.classList.add('bg-green-500', 'text-gray-900');
-                            button.classList.remove('text-gray-300', 'hover:bg-gray-600');
-                            findBestClub();
-                        }
+                }
+
+                const q = query(postsCollectionRef, orderBy("id", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    const posts = snapshot.docs.map(doc => ({ firestoreId: doc.id, ...doc.data() }));
+                    renderFeed(posts);
+                });
+
+                function renderFeed(photoData) {
+                    if (!feedContainer) return;
+                    if (photoData.length === 0) {
+                        feedContainer.innerHTML = `<p class="text-center text-gray-500">No photos yet.</p>`;
+                        return;
+                    }
+                    feedContainer.innerHTML = '';
+                    photoData.forEach(post => {
+                        const postElement = createPostElement(post);
+                        feedContainer.appendChild(postElement);
                     });
-                 }
+                }
+
+                function createPostElement(post) {
+                    const article = document.createElement('article');
+                    article.className = 'post-card bg-white rounded-lg mb-8 shadow-sm';
+                    article.dataset.postId = post.firestoreId;
+
+                    const header = `<div class="flex items-center p-4 border-b border-gray-200"><img src="https://placehold.co/40x40/E8AA42/FFFFFF?text=B" alt="Brett's Avatar" class="w-10 h-10 rounded-full"><div class="ml-3"><p class="font-bold text-sm text-gray-800">brett_official</p><p class="text-xs text-gray-500">${post.timestamp}</p></div></div>`;
+                    const image = `<img src="${post.imageUrl}" alt="${post.caption}" class="w-full h-auto">`;
+                    const actionsAndCaption = `<div class="p-4"><p class="text-sm text-gray-800"><span class="font-bold">brett_official</span> ${post.caption}</p></div>`;
+                    
+                    const commentsContainer = document.createElement('div');
+                    commentsContainer.className = 'comment-section border-t border-gray-200 px-4 pt-2 pb-1 max-h-48 overflow-y-auto';
+                    if (post.comments) {
+                        post.comments.forEach(comment => {
+                            const commentElement = document.createElement('p');
+                            commentElement.className = 'text-sm mb-1';
+                            commentElement.innerHTML = `<span class="font-semibold text-gray-700">${comment.user}</span> ${comment.text}`;
+                            commentsContainer.appendChild(commentElement);
+                        });
+                    }
+
+                    const commentForm = `<div class="border-t border-gray-200 p-3"><form class="comment-form flex"><input type="text" name="username" class="comment-input text-sm w-1/3 border border-gray-300 rounded-l-md px-3 py-2 transition focus:border-gray-500" placeholder="Your Name" required><input type="text" name="comment" class="comment-input text-sm w-2/3 border-t border-b border-gray-300 px-3 py-2 transition focus:border-gray-500" placeholder="Add a comment..." required><button type="submit" class="bg-blue-500 text-white font-semibold text-sm px-4 rounded-r-md hover:bg-blue-600 transition">Post</button></form></div>`;
+                    
+                    article.innerHTML = header + image + actionsAndCaption;
+                    article.appendChild(commentsContainer);
+                    article.innerHTML += commentForm;
+                    return article;
+                }
+
+                async function handleCommentSubmit(event) {
+                    event.preventDefault();
+                    const form = event.target;
+                    const postId = form.closest('article').dataset.postId;
+                    const usernameInput = form.querySelector('input[name="username"]');
+                    const commentInput = form.querySelector('input[name="comment"]');
+
+                    const newComment = {
+                        user: usernameInput.value.trim(),
+                        text: commentInput.value.trim()
+                    };
+                    
+                    const postRef = doc(postsCollectionRef, postId);
+                    const currentPost = (await getDocs(postsCollectionRef)).docs.find(doc => doc.id === postId).data();
+                    const updatedComments = [...(currentPost.comments || []), newComment];
+
+                    await updateDoc(postRef, { comments: updatedComments });
+
+                    form.reset();
+                }
+
+                feedContainer.addEventListener('submit', function(event) {
+                    if (event.target.classList.contains('comment-form')) {
+                        handleCommentSubmit(event);
+                    }
+                });
             }
 
-            const getScoreColor = (score, par) => {
-                if (score === 0) return 'text-white';
-                const diff = score - par;
-                if (diff <= 0) return 'text-green-400';
-                if (diff === 1) return 'text-white';
-                if (diff === 2) return 'text-yellow-400';
-                return 'text-red-400';
-            };
+            // --- GOLF CADDIE APP INITIALIZATION ---
+            function initGolfApp() {
+                const golfAppContainer = document.getElementById('golf-app-container');
+                if (!golfAppContainer) return;
 
-            const findBestClub = () => {
-                const distanceInput = document.getElementById('distance-input');
-                const resultContainer = document.getElementById('result-container');
-                if (!distanceInput || !resultContainer) return;
-                const numDistance = parseInt(distanceInput.value, 10);
-                if (isNaN(numDistance) || numDistance <= 0) {
-                    resultContainer.innerHTML = '<p class="text-gray-500">Enter a yardage to get a suggestion.</p>';
-                    return;
+                let state = { clubs: [], scorecard: {}, history: [], confidence: 0, roundToDeleteIndex: null };
+                const defaultClubs = [ { name: 'Driver', min: 200, max: 220, order: 1 }, { name: '4H', min: 185, max: 200, order: 2 }, { name: '6 Iron', min: 145, max: 160, order: 3 }, { name: '7 Iron', min: 140, max: 155, order: 4 }, { name: '8 Iron', min: 135, max: 150, order: 5 }, { name: '9 Iron', min: 130, max: 145, order: 6 }, { name: 'PW', min: 110, max: 135, order: 7 }, { name: 'A/GW', min: 100, max: 120, order: 8 } ];
+                const createDefaultScorecard = () => ({ scores: Array(18).fill(0), pars: Array(18).fill(4), putts: Array(18).fill(0), roundType: 18 });
+                
+                const vibrate = () => { if ('vibrate' in navigator) navigator.vibrate(10); };
+                
+                const loadData = () => { try { state.clubs = JSON.parse(localStorage.getItem('golfCaddieClubs')) || defaultClubs; state.scorecard = JSON.parse(localStorage.getItem('golfCaddieScorecard')) || createDefaultScorecard(); if (!state.scorecard.putts || state.scorecard.putts.length !== 18) { state.scorecard.putts = Array(18).fill(0); } state.history = JSON.parse(localStorage.getItem('golfCaddieHistory')) || []; } catch (e) { console.error("Error loading data:", e); state.clubs = defaultClubs; state.scorecard = createDefaultScorecard(); state.history = []; } };
+                const saveData = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error(`Error saving ${key}:`, e); } };
+                const saveClubs = () => { state.clubs.sort((a, b) => b.max - a.max); state.clubs.forEach((club, index) => club.order = index + 1); saveData('golfCaddieClubs', state.clubs); };
+                const saveScorecard = () => saveData('golfCaddieScorecard', state.scorecard);
+                const saveHistory = () => saveData('golfCaddieHistory', state.history);
+
+                const showModal = (modalId) => document.getElementById(modalId).classList.add('active');
+                const hideModal = (modalId) => document.getElementById(modalId).classList.remove('active');
+
+                function displayGolfView(html) {
+                    golfAppContainer.innerHTML = html;
+                    const distanceInput = golfAppContainer.querySelector('#distance-input');
+                    if (distanceInput) {
+                        distanceInput.addEventListener('input', findBestClub);
+                    }
+                    const confidenceSlider = golfAppContainer.querySelector('#confidence-slider');
+                    if(confidenceSlider) {
+                        const normalButton = confidenceSlider.querySelector('button[data-value="0"]');
+                        if(normalButton) {
+                            normalButton.classList.add('bg-green-500', 'text-gray-900');
+                            normalButton.classList.remove('text-gray-300', 'hover:bg-gray-600');
+                        }
+                        confidenceSlider.addEventListener('click', (e) => {
+                            const button = e.target.closest('button');
+                            if(button) {
+                                vibrate();
+                                state.confidence = parseInt(button.dataset.value, 10);
+                                confidenceSlider.querySelectorAll('button').forEach(btn => {
+                                    btn.classList.remove('bg-green-500', 'text-gray-900');
+                                    btn.classList.add('text-gray-300', 'hover:bg-gray-600');
+                                });
+                                button.classList.add('bg-green-500', 'text-gray-900');
+                                button.classList.remove('text-gray-300', 'hover:bg-gray-600');
+                                findBestClub();
+                            }
+                        });
+                    }
                 }
-                const calculateScore = (club) => {
-                    if (state.confidence === 1) return Math.abs(numDistance - club.max);
-                    if (state.confidence === -1) return Math.abs(numDistance - club.min);
-                    return Math.abs(numDistance - (club.min + club.max) / 2);
+
+                const getScoreColor = (score, par) => {
+                    if (score === 0) return 'text-white';
+                    const diff = score - par;
+                    if (diff <= 0) return 'text-green-400';
+                    if (diff === 1) return 'text-white';
+                    if (diff === 2) return 'text-yellow-400';
+                    return 'text-red-400';
                 };
-                const rankedClubs = state.clubs.map(club => ({ club, score: calculateScore(club) })).sort((a, b) => a.score - b.score);
-                let suggestions = rankedClubs.slice(0, 2).map(item => item.club);
-                if (rankedClubs.length > 2 && rankedClubs[2].score <= 15) {
-                    suggestions.push(rankedClubs[2].club);
-                }
-                renderResult(`For ${numDistance} yds, your best options are:`, suggestions);
-            };
 
-            const renderResult = (prompt, suggestions) => {
-                const resultContainer = document.getElementById('result-container');
-                if (!resultContainer) return;
-                const rankColors = ['text-green-400', 'text-yellow-400', 'text-red-400'];
-                let html = `<p class="text-xl text-gray-400 mb-3">${prompt}</p><div class="space-y-4 text-center">`;
-                suggestions.forEach((club, index) => {
-                    const color = rankColors[index] || 'text-white';
-                    const range = club.name === 'Driver' ? `${club.min}+ yds` : `${club.min}-${club.max} yds`;
-                    html += `<div class="text-5xl font-bold ${color}">${club.name}<span class="block text-3xl font-normal text-white/90 mt-1">(${range})</span></div>`;
-                    if (index < suggestions.length - 1) html += '<p class="text-lg text-gray-500 my-2">or</p>';
-                });
-                resultContainer.innerHTML = html + '</div>';
-            };
+                const findBestClub = () => {
+                    const distanceInput = document.getElementById('distance-input');
+                    const resultContainer = document.getElementById('result-container');
+                    if (!distanceInput || !resultContainer) return;
+                    const numDistance = parseInt(distanceInput.value, 10);
+                    if (isNaN(numDistance) || numDistance <= 0) {
+                        resultContainer.innerHTML = '<p class="text-gray-500">Enter a yardage to get a suggestion.</p>';
+                        return;
+                    }
+                    const calculateScore = (club) => {
+                        if (state.confidence === 1) return Math.abs(numDistance - club.max);
+                        if (state.confidence === -1) return Math.abs(numDistance - club.min);
+                        return Math.abs(numDistance - (club.min + club.max) / 2);
+                    };
+                    const rankedClubs = state.clubs.map(club => ({ club, score: calculateScore(club) })).sort((a, b) => a.score - b.score);
+                    let suggestions = rankedClubs.slice(0, 2).map(item => item.club);
+                    if (rankedClubs.length > 2 && rankedClubs[2].score <= 15) {
+                        suggestions.push(rankedClubs[2].club);
+                    }
+                    renderResult(`For ${numDistance} yds, your best options are:`, suggestions);
+                };
 
-            const renderCaddie = () => {
-                const html = `
-                <div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn">
-                    <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold text-green-400 flex items-center gap-3">
-                            <svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M216 32h-80a8 8 0 0 0-5.66 2.34L64 99.59V40a8 8 0 0 0-16 0v168a8 8 0 0 0 16 0v-59.59l66.34 65.25A8 8 0 0 0 136 216h80a8 8 0 0 0 8-8V40a8 8 0 0 0-8-8ZM138.34 128l-56-55.15L144.59 48H208v128h-63.41l62.07-60.85Z"></path></svg>
-                            Caddie Pro
-                        </h1>
-                        <div class="flex items-center gap-2">
-                             <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="history">
-                                <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg>
-                            </button>
-                            <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="scorecard">
-                                <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216 40H40a16 16 0 0 0-16 16v144a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V56a16 16 0 0 0-16-16Zm0 160H40V56h176v144ZM100 88v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Zm48 0v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Zm48 0v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Z"></path></svg>
-                            </button>
-                            <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="settings">
-                               <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M234.2,141.13,223.86,128l10.34-13.13a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34,13.12-10.34a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34L223.86,28,201.73,24.87l-10.34-13.12a15.86,15.86,0,0,0-22.13-3.13L156,21.73,142.87,11.39a15.86,15.86,0,0,0-22.13,3.13L107.62,24.87,94.5,11.39a15.86,15.86,0,0,0-22.13,3.13L59.25,24.87,48.91,11.39A15.86,15.86,0,0,0,26.78,14.52L16.44,24.87,3.32,38.25a15.86,15.86,0,0,0,3.13,22.13L16.79,70.72,3.67,81.06a15.86,15.86,0,0,0,3.13,22.13L16.44,113.53,3.32,126.87a15.86,15.86,0,0,0,3.13,22.13L21.73,159.34,11.39,172.47a15.86,15.86,0,0,0,3.13,22.13L24.87,204.94,11.39,218.06a15.86,15.86,0,0,0,3.13,22.13L24.87,250.53,38.25,253.66a15.86,15.86,0,0,0,22.13-3.13L70.72,237.09,81.06,250.21a15.86,15.86,0,0,0,22.13-3.13L113.53,236.75l10.34,13.12a15.86,15.86,0,0,0,22.13,3.13L159.34,242.91l13.12,10.34a15.86,15.86,0,0,0,22.13-3.13l10.34-13.12,13.12,10.34a15.86,15.86,0,0,0,22.13-3.13L242.91,232.53l10.34-13.12a15.86,15.86,0,0,0-3.13-22.13l-10.34-13.12,13.12-10.34a15.86,15.86,0,0,0,3.13-22.13ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Z"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="space-y-6">
-                        <input type="number" id="distance-input" placeholder="Enter distance in yds" class="w-full text-center bg-gray-700 border border-gray-600 text-white text-lg rounded-lg p-4 focus:ring-2 focus:ring-green-500 focus:outline-none" />
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-2 text-center">Shot Confidence</label>
-                            <div id="confidence-slider" class="flex justify-between items-center bg-gray-700 rounded-lg p-1">
-                                <button data-value="-1" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Smooth</button>
-                                <button data-value="0" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Normal</button>
-                                <button data-value="1" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Aggressive</button>
+                const renderResult = (prompt, suggestions) => {
+                    const resultContainer = document.getElementById('result-container');
+                    if (!resultContainer) return;
+                    const rankColors = ['text-green-400', 'text-yellow-400', 'text-red-400'];
+                    let html = `<p class="text-xl text-gray-400 mb-3">${prompt}</p><div class="space-y-4 text-center">`;
+                    suggestions.forEach((club, index) => {
+                        const color = rankColors[index] || 'text-white';
+                        const range = club.name === 'Driver' ? `${club.min}+ yds` : `${club.min}-${club.max} yds`;
+                        html += `<div class="text-5xl font-bold ${color}">${club.name}<span class="block text-3xl font-normal text-white/90 mt-1">(${range})</span></div>`;
+                        if (index < suggestions.length - 1) html += '<p class="text-lg text-gray-500 my-2">or</p>';
+                    });
+                    resultContainer.innerHTML = html + '</div>';
+                };
+
+                const renderCaddie = () => {
+                    const html = `
+                    <div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-3xl font-bold text-green-400 flex items-center gap-3">
+                                <svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M216 32h-80a8 8 0 0 0-5.66 2.34L64 99.59V40a8 8 0 0 0-16 0v168a8 8 0 0 0 16 0v-59.59l66.34 65.25A8 8 0 0 0 136 216h80a8 8 0 0 0 8-8V40a8 8 0 0 0-8-8ZM138.34 128l-56-55.15L144.59 48H208v128h-63.41l62.07-60.85Z"></path></svg>
+                                Caddie Pro
+                            </h1>
+                            <div class="flex items-center gap-2">
+                                <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="history">
+                                    <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg>
+                                </button>
+                                <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="scorecard">
+                                    <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216 40H40a16 16 0 0 0-16 16v144a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V56a16 16 0 0 0-16-16Zm0 160H40V56h176v144ZM100 88v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Zm48 0v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Zm48 0v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Z"></path></svg>
+                                </button>
+                                <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="settings">
+                                <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M234.2,141.13,223.86,128l10.34-13.13a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34,13.12-10.34a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34L223.86,28,201.73,24.87l-10.34-13.12a15.86,15.86,0,0,0-22.13-3.13L156,21.73,142.87,11.39a15.86,15.86,0,0,0-22.13,3.13L107.62,24.87,94.5,11.39a15.86,15.86,0,0,0-22.13,3.13L59.25,24.87,48.91,11.39A15.86,15.86,0,0,0,26.78,14.52L16.44,24.87,3.32,38.25a15.86,15.86,0,0,0,3.13,22.13L16.79,70.72,3.67,81.06a15.86,15.86,0,0,0,3.13,22.13L16.44,113.53,3.32,126.87a15.86,15.86,0,0,0,3.13,22.13L21.73,159.34,11.39,172.47a15.86,15.86,0,0,0,3.13,22.13L24.87,204.94,11.39,218.06a15.86,15.86,0,0,0,3.13,22.13L24.87,250.53,38.25,253.66a15.86,15.86,0,0,0,22.13-3.13L70.72,237.09,81.06,250.21a15.86,15.86,0,0,0,22.13-3.13L113.53,236.75l10.34,13.12a15.86,15.86,0,0,0,22.13,3.13L159.34,242.91l13.12,10.34a15.86,15.86,0,0,0,22.13-3.13l10.34-13.12,13.12,10.34a15.86,15.86,0,0,0,22.13-3.13L242.91,232.53l10.34-13.12a15.86,15.86,0,0,0-3.13-22.13l-10.34-13.12,13.12-10.34a15.86,15.86,0,0,0,3.13-22.13ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Z"/></svg>
+                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div id="result-container" class="mt-8 min-h-[10rem] flex flex-col items-center justify-center">
-                        <p class="text-gray-500">Enter a yardage to get a suggestion.</p>
-                    </div>
-                </div>`;
-                displayGolfView(html);
-            };
-            
-            const renderSettings = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-green-400 flex items-center gap-3"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M234.2,141.13,223.86,128l10.34-13.13a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34,13.12-10.34a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34L223.86,28,201.73,24.87l-10.34-13.12a15.86,15.86,0,0,0-22.13-3.13L156,21.73,142.87,11.39a15.86,15.86,0,0,0-22.13,3.13L107.62,24.87,94.5,11.39a15.86,15.86,0,0,0-22.13,3.13L59.25,24.87,48.91,11.39A15.86,15.86,0,0,0,26.78,14.52L16.44,24.87,3.32,38.25a15.86,15.86,0,0,0,3.13,22.13L16.79,70.72,3.67,81.06a15.86,15.86,0,0,0,3.13,22.13L16.44,113.53,3.32,126.87a15.86,15.86,0,0,0,3.13,22.13L21.73,159.34,11.39,172.47a15.86,15.86,0,0,0,3.13,22.13L24.87,204.94,11.39,218.06a15.86,15.86,0,0,0,3.13,22.13L24.87,250.53,38.25,253.66a15.86,15.86,0,0,0,22.13-3.13L70.72,237.09,81.06,250.21a15.86,15.86,0,0,0,22.13-3.13L113.53,236.75l10.34,13.12a15.86,15.86,0,0,0,22.13,3.13L159.34,242.91l13.12,10.34a15.86,15.86,0,0,0,22.13-3.13l10.34-13.12,13.12,10.34a15.86,15.86,0,0,0,22.13-3.13L242.91,232.53l10.34-13.12a15.86,15.86,0,0,0-3.13-22.13l-10.34-13.12,13.12-10.34a15.86,15.86,0,0,0,3.13-22.13ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Z"/></svg> My Clubs</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="settings-clubs-container space-y-4 max-h-[60vh] overflow-y-auto pr-2">`; state.clubs.forEach((club, index) => { html += `<div class="p-4 bg-gray-700/50 rounded-lg"><div class="flex justify-between items-center mb-2"><p class="font-bold text-lg text-white">${club.name}</p><button class="delete-club text-red-500 hover:text-red-400" data-index="${index}"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192Zm-80-104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg></button></div><div class="flex items-center gap-4"><input type="number" data-index="${index}" data-field="min" value="${club.min}" class="club-input w-full text-center bg-gray-800 border border-gray-600 rounded-lg p-2" /><span class="text-gray-400">-</span><input type="number" data-index="${index}" data-field="max" value="${club.max}" class="club-input w-full text-center bg-gray-800 border border-gray-600 rounded-lg p-2" /></div></div>`; }); html += `</div><button class="add-new-club mt-4 w-full border-2 border-dashed border-gray-600 hover:border-green-500 hover:text-green-500 text-gray-400 font-bold py-3 rounded-lg transition">Add New Club</button><button class="save-clubs mt-2 w-full bg-green-500 text-gray-900 font-bold py-3 rounded-lg">Save & Close</button></div>`; displayGolfView(html); };
-            const renderScorecard = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-fadeIn"><div class="flex justify-between items-center mb-4"><h1 class="text-3xl font-bold text-green-400">Scorecard</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="round-type-selector flex justify-center items-center bg-gray-700 rounded-lg p-1 mb-4"><button data-type="9" class="w-1/2 py-2 text-sm font-semibold rounded-md transition">9 Holes</button><button data-type="18" class="w-1/2 py-2 text-sm font-semibold rounded-md transition">18 Holes</button></div><div id="scorecard-tables" class="space-y-4"></div><div id="scorecard-summary" class="mt-6 border-t border-gray-700 pt-4 flex justify-around items-center"></div><button class="finish-round mt-6 w-full bg-blue-500 text-white font-bold py-3 rounded-lg">Finish & Save Round</button></div>`; displayGolfView(html); updateScorecardView(); };
-            const updateScorecardView = () => { const tablesContainer = document.getElementById('scorecard-tables'); const roundTypeSelector = document.querySelector('.round-type-selector'); if (!tablesContainer || !roundTypeSelector) return; roundTypeSelector.querySelectorAll('button').forEach(btn => { const isSelected = parseInt(btn.dataset.type) === state.scorecard.roundType; btn.classList.toggle('bg-green-500', isSelected); btn.classList.toggle('text-gray-900', isSelected); }); let tablesHTML = renderScorecardTable('Out', Array.from({length: 9}, (_, i) => i + 1), state.scorecard.scores.slice(0, 9), state.scorecard.pars.slice(0, 9), state.scorecard.putts.slice(0, 9), 0, true); if (state.scorecard.roundType === 18) { tablesHTML += renderScorecardTable('In', Array.from({length: 9}, (_, i) => i + 10), state.scorecard.scores.slice(9, 18), state.scorecard.pars.slice(9, 18), state.scorecard.putts.slice(9, 18), 9, true); } tablesContainer.innerHTML = tablesHTML; updateScorecardTotals(); };
-            const renderScorecardTable = (title, holes, scores, pars, putts, startIndex, editable = false) => { let tableHTML = `<div class="w-full overflow-x-auto"><table class="w-full min-w-max text-center text-sm scorecard-table"><thead><tr class="text-gray-400"><th class="p-2 font-semibold">${title}</th>${holes.map(h => `<th class="p-2 font-semibold">${h}</th>`).join('')}<th class="p-2 font-semibold">Total</th></tr></thead><tbody class="bg-gray-700/50 rounded-lg"><tr><td class="p-2 text-gray-300">Par</td>${pars.map((p, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="par" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="par-value font-bold text-xl w-6">${p}</span><button data-type="par" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6">${p}</span>`}</td>`).join('')}<td class="par-total font-bold text-xl p-2">${pars.reduce((a,b)=>a+b,0)}</td></tr><tr><td class="p-2 text-gray-300">Score</td>${scores.map((s, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="score" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-red-500/80 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="score-value font-bold text-xl w-6 ${getScoreColor(s, pars[i])}">${s || '-'}</span><button data-type="score" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-green-500/80 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6 ${getScoreColor(s, pars[i])}">${s || '-'}</span>`}</td>`).join('')}<td class="score-total font-bold text-xl p-2">${scores.reduce((a,b)=>a+b,0)}</td></tr><tr><td class="p-2 text-gray-300">Putts</td>${putts.map((p, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="putt" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="putt-value font-bold text-xl w-6">${p || '-'}</span><button data-type="putt" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6">${p || '-'}</span>`}</td>`).join('')}<td class="putt-total font-bold text-xl p-2">${putts.reduce((a,b)=>a+b,0)}</td></tr></tbody></table></div>`; return tableHTML; };
-            const updateScorecardTotals = () => { const summaryContainer = document.getElementById('scorecard-summary'); if (!summaryContainer) return; const numHoles = state.scorecard.roundType; const scores = state.scorecard.scores.slice(0, numHoles); const pars = state.scorecard.pars.slice(0, numHoles); const putts = state.scorecard.putts.slice(0, numHoles); const totalScore = scores.reduce((a, b) => a + b, 0); const totalPar = pars.reduce((a, b) => a + b, 0); const totalPutts = putts.reduce((a, b) => a + b, 0); const toPar = totalScore - totalPar; const toParStr = toPar > 0 ? `+${toPar}` : toPar === 0 ? 'E' : toPar; const toParColor = toPar <= 0 ? 'text-green-400' : 'text-yellow-400'; summaryContainer.innerHTML = `<div class="text-center"><p class="text-gray-400">Putts</p><p class="text-4xl font-bold">${totalPutts}</p></div><div class="text-center"><p class="text-gray-400">Total</p><p class="text-4xl font-bold">${totalScore}</p></div><div class="text-center"><p class="text-gray-400">To Par</p><p class="text-4xl font-bold ${toParColor}">${toParStr}</p></div>`; };
-            const renderHistory = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-green-400">Round History</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="space-y-3 max-h-[70vh] overflow-y-auto pr-2">`; if (state.history.length === 0) { html += `<div class="text-center text-gray-400 p-8"><p class="text-lg">No saved rounds yet.</p><p class="text-sm">Finish a round on the Scorecard page to see it here.</p></div>`; } else { state.history.forEach((round, index) => { const date = new Date(round.date).toLocaleDateString(); const toPar = round.toPar > 0 ? `+${round.toPar}` : round.toPar === 0 ? 'E' : round.toPar; html += `<div class="bg-gray-700/50 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition"><div class="history-item flex-grow cursor-pointer" data-index="${index}"><p class="font-bold text-lg">${round.courseName}</p><p class="text-sm text-gray-400">${date} <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-xs">${round.scorecard.roundType} Holes</span></p></div><div class="flex items-center gap-4"><div class="text-right history-item cursor-pointer" data-index="${index}"><p class="font-bold text-2xl">${round.totalScore}</p><p class="text-sm text-gray-400">(${toPar})</p></div><button class="delete-round text-red-500 hover:text-red-400 p-2 rounded-full hover:bg-gray-600" data-index="${index}"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192Zm-80-104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg></button></div></div>`; }); } html += `</div></div>`; displayGolfView(html); };
-            const renderRoundDetail = (round) => { const toParStr = round.toPar > 0 ? `+${round.toPar}` : round.toPar === 0 ? 'E' : round.toPar; const toParColor = round.toPar <= 0 ? 'text-green-400' : 'text-yellow-400'; let tablesHTML = renderScorecardTable('Out', Array.from({length: 9}, (_, i) => i + 1), round.scorecard.scores.slice(0, 9), round.scorecard.pars.slice(0, 9), round.scorecard.putts.slice(0, 9), 0, false); if (round.scorecard.roundType === 18) { tablesHTML += renderScorecardTable('In', Array.from({length: 9}, (_, i) => i + 10), round.scorecard.scores.slice(9, 18), round.scorecard.pars.slice(9, 18), round.scorecard.putts.slice(9, 18), 9, false); } let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-fadeIn"><div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold text-green-400">${round.courseName}</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="history"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><p class="text-center text-gray-400 mb-4">${new Date(round.date).toLocaleDateString()}</p><div class="space-y-4">${tablesHTML}</div><div class="mt-6 border-t border-gray-700 pt-4 flex justify-around items-center"><div class="text-center"><p class="text-gray-400">Putts</p><p class="text-4xl font-bold">${round.totalPutts}</p></div><div class="text-center"><p class="text-gray-400">Total</p><p class="text-4xl font-bold">${round.totalScore}</p></div><div class="text-center"><p class="text-gray-400">To Par</p><p class="text-4xl font-bold ${toParColor}">${toParStr}</p></div></div></div>`; displayGolfView(html); };
-            
-            golfAppContainer.addEventListener('click', (e) => {
-                const historyItem = e.target.closest('.history-item');
-                if (historyItem) {
-                    vibrate();
-                    renderRoundDetail(state.history[historyItem.dataset.index]);
-                    return;
-                }
+                        <div class="space-y-6">
+                            <input type="number" id="distance-input" placeholder="Enter distance in yds" class="w-full text-center bg-gray-700 border border-gray-600 text-white text-lg rounded-lg p-4 focus:ring-2 focus:ring-green-500 focus:outline-none" />
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2 text-center">Shot Confidence</label>
+                                <div id="confidence-slider" class="flex justify-between items-center bg-gray-700 rounded-lg p-1">
+                                    <button data-value="-1" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Smooth</button>
+                                    <button data-value="0" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Normal</button>
+                                    <button data-value="1" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Aggressive</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="result-container" class="mt-8 min-h-[10rem] flex flex-col items-center justify-center">
+                            <p class="text-gray-500">Enter a yardage to get a suggestion.</p>
+                        </div>
+                    </div>`;
+                    displayGolfView(html);
+                };
+                
+                const renderSettings = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-green-400 flex items-center gap-3"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M234.2,141.13,223.86,128l10.34-13.13a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34,13.12-10.34a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34L223.86,28,201.73,24.87l-10.34-13.12a15.86,15.86,0,0,0-22.13-3.13L156,21.73,142.87,11.39a15.86,15.86,0,0,0-22.13,3.13L107.62,24.87,94.5,11.39a15.86,15.86,0,0,0-22.13,3.13L59.25,24.87,48.91,11.39A15.86,15.86,0,0,0,26.78,14.52L16.44,24.87,3.32,38.25a15.86,15.86,0,0,0,3.13,22.13L16.79,70.72,3.67,81.06a15.86,15.86,0,0,0,3.13,22.13L16.44,113.53,3.32,126.87a15.86,15.86,0,0,0,3.13,22.13L21.73,159.34,11.39,172.47a15.86,15.86,0,0,0,3.13,22.13L24.87,204.94,11.39,218.06a15.86,15.86,0,0,0,3.13,22.13L24.87,250.53,38.25,253.66a15.86,15.86,0,0,0,22.13-3.13L70.72,237.09,81.06,250.21a15.86,15.86,0,0,0,22.13-3.13L113.53,236.75l10.34,13.12a15.86,15.86,0,0,0,22.13,3.13L159.34,242.91l13.12,10.34a15.86,15.86,0,0,0,22.13-3.13l10.34-13.12,13.12,10.34a15.86,15.86,0,0,0,22.13-3.13L242.91,232.53l10.34-13.12a15.86,15.86,0,0,0-3.13-22.13l-10.34-13.12,13.12-10.34a15.86,15.86,0,0,0,3.13-22.13ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Z"/></svg> My Clubs</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="settings-clubs-container space-y-4 max-h-[60vh] overflow-y-auto pr-2">`; state.clubs.forEach((club, index) => { html += `<div class="p-4 bg-gray-700/50 rounded-lg"><div class="flex justify-between items-center mb-2"><p class="font-bold text-lg text-white">${club.name}</p><button class="delete-club text-red-500 hover:text-red-400" data-index="${index}"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192Zm-80-104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg></button></div><div class="flex items-center gap-4"><input type="number" data-index="${index}" data-field="min" value="${club.min}" class="club-input w-full text-center bg-gray-800 border border-gray-600 rounded-lg p-2" /><span class="text-gray-400">-</span><input type="number" data-index="${index}" data-field="max" value="${club.max}" class="club-input w-full text-center bg-gray-800 border border-gray-600 rounded-lg p-2" /></div></div>`; }); html += `</div><button class="add-new-club mt-4 w-full border-2 border-dashed border-gray-600 hover:border-green-500 hover:text-green-500 text-gray-400 font-bold py-3 rounded-lg transition">Add New Club</button><button class="save-clubs mt-2 w-full bg-green-500 text-gray-900 font-bold py-3 rounded-lg">Save & Close</button></div>`; displayGolfView(html); };
+                const renderScorecard = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-fadeIn"><div class="flex justify-between items-center mb-4"><h1 class="text-3xl font-bold text-green-400">Scorecard</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="round-type-selector flex justify-center items-center bg-gray-700 rounded-lg p-1 mb-4"><button data-type="9" class="w-1/2 py-2 text-sm font-semibold rounded-md transition">9 Holes</button><button data-type="18" class="w-1/2 py-2 text-sm font-semibold rounded-md transition">18 Holes</button></div><div id="scorecard-tables" class="space-y-4"></div><div id="scorecard-summary" class="mt-6 border-t border-gray-700 pt-4 flex justify-around items-center"></div><button class="finish-round mt-6 w-full bg-blue-500 text-white font-bold py-3 rounded-lg">Finish & Save Round</button></div>`; displayGolfView(html); updateScorecardView(); };
+                const updateScorecardView = () => { const tablesContainer = document.getElementById('scorecard-tables'); const roundTypeSelector = document.querySelector('.round-type-selector'); if (!tablesContainer || !roundTypeSelector) return; roundTypeSelector.querySelectorAll('button').forEach(btn => { const isSelected = parseInt(btn.dataset.type) === state.scorecard.roundType; btn.classList.toggle('bg-green-500', isSelected); btn.classList.toggle('text-gray-900', isSelected); }); let tablesHTML = renderScorecardTable('Out', Array.from({length: 9}, (_, i) => i + 1), state.scorecard.scores.slice(0, 9), state.scorecard.pars.slice(0, 9), state.scorecard.putts.slice(0, 9), 0, true); if (state.scorecard.roundType === 18) { tablesHTML += renderScorecardTable('In', Array.from({length: 9}, (_, i) => i + 10), state.scorecard.scores.slice(9, 18), state.scorecard.pars.slice(9, 18), state.scorecard.putts.slice(9, 18), 9, true); } tablesContainer.innerHTML = tablesHTML; updateScorecardTotals(); };
+                const renderScorecardTable = (title, holes, scores, pars, putts, startIndex, editable = false) => { let tableHTML = `<div class="w-full overflow-x-auto"><table class="w-full min-w-max text-center text-sm scorecard-table"><thead><tr class="text-gray-400"><th class="p-2 font-semibold">${title}</th>${holes.map(h => `<th class="p-2 font-semibold">${h}</th>`).join('')}<th class="p-2 font-semibold">Total</th></tr></thead><tbody class="bg-gray-700/50 rounded-lg"><tr><td class="p-2 text-gray-300">Par</td>${pars.map((p, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="par" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="par-value font-bold text-xl w-6">${p}</span><button data-type="par" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6">${p}</span>`}</td>`).join('')}<td class="par-total font-bold text-xl p-2">${pars.reduce((a,b)=>a+b,0)}</td></tr><tr><td class="p-2 text-gray-300">Score</td>${scores.map((s, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="score" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-red-500/80 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="score-value font-bold text-xl w-6 ${getScoreColor(s, pars[i])}">${s || '-'}</span><button data-type="score" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-green-500/80 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6 ${getScoreColor(s, pars[i])}">${s || '-'}</span>`}</td>`).join('')}<td class="score-total font-bold text-xl p-2">${scores.reduce((a,b)=>a+b,0)}</td></tr><tr><td class="p-2 text-gray-300">Putts</td>${putts.map((p, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="putt" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="putt-value font-bold text-xl w-6">${p || '-'}</span><button data-type="putt" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6">${p || '-'}</span>`}</td>`).join('')}<td class="putt-total font-bold text-xl p-2">${putts.reduce((a,b)=>a+b,0)}</td></tr></tbody></table></div>`; return tableHTML; };
+                const updateScorecardTotals = () => { const summaryContainer = document.getElementById('scorecard-summary'); if (!summaryContainer) return; const numHoles = state.scorecard.roundType; const scores = state.scorecard.scores.slice(0, numHoles); const pars = state.scorecard.pars.slice(0, numHoles); const putts = state.scorecard.putts.slice(0, numHoles); const totalScore = scores.reduce((a, b) => a + b, 0); const totalPar = pars.reduce((a, b) => a + b, 0); const totalPutts = putts.reduce((a, b) => a + b, 0); const toPar = totalScore - totalPar; const toParStr = toPar > 0 ? `+${toPar}` : toPar === 0 ? 'E' : toPar; const toParColor = toPar <= 0 ? 'text-green-400' : 'text-yellow-400'; summaryContainer.innerHTML = `<div class="text-center"><p class="text-gray-400">Putts</p><p class="text-4xl font-bold">${totalPutts}</p></div><div class="text-center"><p class="text-gray-400">Total</p><p class="text-4xl font-bold">${totalScore}</p></div><div class="text-center"><p class="text-gray-400">To Par</p><p class="text-4xl font-bold ${toParColor}">${toParStr}</p></div>`; };
+                const renderHistory = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-green-400">Round History</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="space-y-3 max-h-[70vh] overflow-y-auto pr-2">`; if (state.history.length === 0) { html += `<div class="text-center text-gray-400 p-8"><p class="text-lg">No saved rounds yet.</p><p class="text-sm">Finish a round on the Scorecard page to see it here.</p></div>`; } else { state.history.forEach((round, index) => { const date = new Date(round.date).toLocaleDateString(); const toPar = round.toPar > 0 ? `+${round.toPar}` : round.toPar === 0 ? 'E' : round.toPar; html += `<div class="bg-gray-700/50 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition"><div class="history-item flex-grow cursor-pointer" data-index="${index}"><p class="font-bold text-lg">${round.courseName}</p><p class="text-sm text-gray-400">${date} <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-xs">${round.scorecard.roundType} Holes</span></p></div><div class="flex items-center gap-4"><div class="text-right history-item cursor-pointer" data-index="${index}"><p class="font-bold text-2xl">${round.totalScore}</p><p class="text-sm text-gray-400">(${toPar})</p></div><button class="delete-round text-red-500 hover:text-red-400 p-2 rounded-full hover:bg-gray-600" data-index="${index}"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192Zm-80-104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg></button></div></div>`; }); } html += `</div></div>`; displayGolfView(html); };
+                const renderRoundDetail = (round) => { const toParStr = round.toPar > 0 ? `+${round.toPar}` : round.toPar === 0 ? 'E' : round.toPar; const toParColor = round.toPar <= 0 ? 'text-green-400' : 'text-yellow-400'; let tablesHTML = renderScorecardTable('Out', Array.from({length: 9}, (_, i) => i + 1), round.scorecard.scores.slice(0, 9), round.scorecard.pars.slice(0, 9), round.scorecard.putts.slice(0, 9), 0, false); if (round.scorecard.roundType === 18) { tablesHTML += renderScorecardTable('In', Array.from({length: 9}, (_, i) => i + 10), round.scorecard.scores.slice(9, 18), round.scorecard.pars.slice(9, 18), round.scorecard.putts.slice(9, 18), 9, false); } let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-fadeIn"><div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold text-green-400">${round.courseName}</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="history"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><p class="text-center text-gray-400 mb-4">${new Date(round.date).toLocaleDateString()}</p><div class="space-y-4">${tablesHTML}</div><div class="mt-6 border-t border-gray-700 pt-4 flex justify-around items-center"><div class="text-center"><p class="text-gray-400">Putts</p><p class="text-4xl font-bold">${round.totalPutts}</p></div><div class="text-center"><p class="text-gray-400">Total</p><p class="text-4xl font-bold">${round.totalScore}</p></div><div class="text-center"><p class="text-gray-400">To Par</p><p class="text-4xl font-bold ${toParColor}">${toParStr}</p></div></div></div>`; displayGolfView(html); };
+                
+                golfAppContainer.addEventListener('click', (e) => {
+                    const historyItem = e.target.closest('.history-item');
+                    if (historyItem) {
+                        vibrate();
+                        renderRoundDetail(state.history[historyItem.dataset.index]);
+                        return;
+                    }
 
-                const button = e.target.closest('button');
-                if (button) {
-                    vibrate();
-                    if (button.matches('.golf-nav-btn')) { const page = button.dataset.page; if (page === 'caddie') renderCaddie(); if (page === 'settings') renderSettings(); if (page === 'scorecard') renderScorecard(); if (page === 'history') renderHistory(); return; }
-                    if (button.matches('.score-btn')) { const { type, index, delta } = button.dataset; const i = parseInt(index, 10); const fieldMap = { par: 'pars', score: 'scores', putt: 'putts' }; const valueMap = { par: 'par-value', score: 'score-value', putt: 'putt-value' }; const totalMap = { par: 'par-total', score: 'score-total', putt: 'putt-total' }; const targetArray = state.scorecard[fieldMap[type]]; const newValue = Math.max(0, (targetArray[i] || 0) + parseInt(delta)); targetArray[i] = newValue; saveScorecard(); const valueSpan = button.parentElement.querySelector(`.${valueMap[type]}`); if (valueSpan) { valueSpan.textContent = newValue || '-'; if (type === 'score') { valueSpan.className = `score-value font-bold text-xl w-6 ${getScoreColor(newValue, state.scorecard.pars[i])}`; } } const table = button.closest('table'); if (table) { const isOutTable = i < 9; const startIndex = isOutTable ? 0 : 9; const endIndex = isOutTable ? 9 : 18; const rowTotal = state.scorecard[fieldMap[type]].slice(startIndex, endIndex).reduce((a, b) => a + b, 0); const totalTd = table.querySelector(`.${totalMap[type]}`); if (totalTd) { totalTd.textContent = rowTotal; } } updateScorecardTotals(); return; }
-                    if (button.matches('.save-clubs')) { const container = golfAppContainer.querySelector('.settings-clubs-container'); container.querySelectorAll('.club-input').forEach(input => { const index = parseInt(input.dataset.index, 10); const field = input.dataset.field; const value = parseInt(input.value, 10); if(state.clubs[index] && !isNaN(value)) { state.clubs[index][field] = value; } }); saveClubs(); button.textContent = 'Saved!'; setTimeout(() => renderCaddie(), 1000); }
-                    if (button.matches('.add-new-club')) { showModal('add-club-modal'); }
-                    if (button.matches('.delete-club')) { state.clubs.splice(parseInt(button.dataset.index, 10), 1); saveClubs(); renderSettings(); }
-                    if (button.closest('.round-type-selector')) { state.scorecard.roundType = parseInt(button.dataset.type, 10); saveScorecard(); updateScorecardView(); }
-                    if (button.matches('.finish-round')) { document.getElementById('course-name-input').value = `Round - ${new Date().toLocaleDateString()}`; showModal('save-modal'); }
-                    if (button.matches('.delete-round')) { state.roundToDeleteIndex = parseInt(button.dataset.index, 10); const round = state.history[state.roundToDeleteIndex]; document.getElementById('delete-round-text').textContent = `Are you sure you want to delete the round at ${round.courseName}?`; showModal('delete-round-modal'); }
-                }
-            });
+                    const button = e.target.closest('button');
+                    if (button) {
+                        vibrate();
+                        if (button.matches('.golf-nav-btn')) { const page = button.dataset.page; if (page === 'caddie') renderCaddie(); if (page === 'settings') renderSettings(); if (page === 'scorecard') renderScorecard(); if (page === 'history') renderHistory(); return; }
+                        if (button.matches('.score-btn')) { const { type, index, delta } = button.dataset; const i = parseInt(index, 10); const fieldMap = { par: 'pars', score: 'scores', putt: 'putts' }; const valueMap = { par: 'par-value', score: 'score-value', putt: 'putt-value' }; const totalMap = { par: 'par-total', score: 'score-total', putt: 'putt-total' }; const targetArray = state.scorecard[fieldMap[type]]; const newValue = Math.max(0, (targetArray[i] || 0) + parseInt(delta)); targetArray[i] = newValue; saveScorecard(); const valueSpan = button.parentElement.querySelector(`.${valueMap[type]}`); if (valueSpan) { valueSpan.textContent = newValue || '-'; if (type === 'score') { valueSpan.className = `score-value font-bold text-xl w-6 ${getScoreColor(newValue, state.scorecard.pars[i])}`; } } const table = button.closest('table'); if (table) { const isOutTable = i < 9; const startIndex = isOutTable ? 0 : 9; const endIndex = isOutTable ? 9 : 18; const rowTotal = state.scorecard[fieldMap[type]].slice(startIndex, endIndex).reduce((a, b) => a + b, 0); const totalTd = table.querySelector(`.${totalMap[type]}`); if (totalTd) { totalTd.textContent = rowTotal; } } updateScorecardTotals(); return; }
+                        if (button.matches('.save-clubs')) { const container = golfAppContainer.querySelector('.settings-clubs-container'); container.querySelectorAll('.club-input').forEach(input => { const index = parseInt(input.dataset.index, 10); const field = input.dataset.field; const value = parseInt(input.value, 10); if(state.clubs[index] && !isNaN(value)) { state.clubs[index][field] = value; } }); saveClubs(); button.textContent = 'Saved!'; setTimeout(() => renderCaddie(), 1000); }
+                        if (button.matches('.add-new-club')) { showModal('add-club-modal'); }
+                        if (button.matches('.delete-club')) { state.clubs.splice(parseInt(button.dataset.index, 10), 1); saveClubs(); renderSettings(); }
+                        if (button.closest('.round-type-selector')) { state.scorecard.roundType = parseInt(button.dataset.type, 10); saveScorecard(); updateScorecardView(); }
+                        if (button.matches('.finish-round')) { document.getElementById('course-name-input').value = `Round - ${new Date().toLocaleDateString()}`; showModal('save-modal'); }
+                        if (button.matches('.delete-round')) { state.roundToDeleteIndex = parseInt(button.dataset.index, 10); const round = state.history[state.roundToDeleteIndex]; document.getElementById('delete-round-text').textContent = `Are you sure you want to delete the round at ${round.courseName}?`; showModal('delete-round-modal'); }
+                    }
+                });
 
-            document.getElementById('cancel-save').addEventListener('click', () => hideModal('save-modal'));
-            document.getElementById('confirm-save').addEventListener('click', () => { const courseName = document.getElementById('course-name-input').value.trim(); if (courseName) { const roundToSave = JSON.parse(JSON.stringify(state.scorecard)); const numHoles = roundToSave.roundType; const totalScore = roundToSave.scores.slice(0, numHoles).reduce((a, b) => a + b, 0); const totalPar = roundToSave.pars.slice(0, numHoles).reduce((a, b) => a + b, 0); const totalPutts = roundToSave.putts.slice(0, numHoles).reduce((a, b) => a + b, 0); state.history.unshift({ courseName, date: new Date().toISOString(), totalScore, toPar: totalScore - totalPar, totalPutts, scorecard: roundToSave }); saveHistory(); state.scorecard = createDefaultScorecard(); saveScorecard(); hideModal('save-modal'); renderHistory(); } });
-            document.getElementById('cancel-delete-round').addEventListener('click', () => hideModal('delete-round-modal'));
-            document.getElementById('confirm-delete-round').addEventListener('click', () => { if (state.roundToDeleteIndex !== null) { state.history.splice(state.roundToDeleteIndex, 1); saveHistory(); renderHistory(); state.roundToDeleteIndex = null; } hideModal('delete-round-modal'); });
-            document.getElementById('cancel-add-club').addEventListener('click', () => hideModal('add-club-modal'));
-            document.getElementById('confirm-add-club').addEventListener('click', () => { const name = document.getElementById('new-club-name').value.trim(); const min = parseInt(document.getElementById('new-club-min').value, 10); const max = parseInt(document.getElementById('new-club-max').value, 10); if (name && !isNaN(min) && !isNaN(max) && max >= min) { state.clubs.push({ name, min, max, order: state.clubs.length + 1 }); saveClubs(); document.getElementById('new-club-name').value = ''; document.getElementById('new-club-min').value = ''; document.getElementById('new-club-max').value = ''; hideModal('add-club-modal'); renderSettings(); } else { alert('Please enter a valid name and range (max >= min).'); } });
+                document.getElementById('cancel-save').addEventListener('click', () => hideModal('save-modal'));
+                document.getElementById('confirm-save').addEventListener('click', () => { const courseName = document.getElementById('course-name-input').value.trim(); if (courseName) { const roundToSave = JSON.parse(JSON.stringify(state.scorecard)); const numHoles = roundToSave.roundType; const totalScore = roundToSave.scores.slice(0, numHoles).reduce((a, b) => a + b, 0); const totalPar = roundToSave.pars.slice(0, numHoles).reduce((a, b) => a + b, 0); const totalPutts = roundToSave.putts.slice(0, numHoles).reduce((a, b) => a + b, 0); state.history.unshift({ courseName, date: new Date().toISOString(), totalScore, toPar: totalScore - totalPar, totalPutts, scorecard: roundToSave }); saveHistory(); state.scorecard = createDefaultScorecard(); saveScorecard(); hideModal('save-modal'); renderHistory(); } });
+                document.getElementById('cancel-delete-round').addEventListener('click', () => hideModal('delete-round-modal'));
+                document.getElementById('confirm-delete-round').addEventListener('click', () => { if (state.roundToDeleteIndex !== null) { state.history.splice(state.roundToDeleteIndex, 1); saveHistory(); renderHistory(); state.roundToDeleteIndex = null; } hideModal('delete-round-modal'); });
+                document.getElementById('cancel-add-club').addEventListener('click', () => hideModal('add-club-modal'));
+                document.getElementById('confirm-add-club').addEventListener('click', () => { const name = document.getElementById('new-club-name').value.trim(); const min = parseInt(document.getElementById('new-club-min').value, 10); const max = parseInt(document.getElementById('new-club-max').value, 10); if (name && !isNaN(min) && !isNaN(max) && max >= min) { state.clubs.push({ name, min, max, order: state.clubs.length + 1 }); saveClubs(); document.getElementById('new-club-name').value = ''; document.getElementById('new-club-min').value = ''; document.getElementById('new-club-max').value = ''; hideModal('add-club-modal'); renderSettings(); } else { alert('Please enter a valid name and range (max >= min).'); } });
 
-            loadData();
-            renderCaddie();
-        }
-
-        // --- GAMES APP LOGIC ---
-        const gameSelectionMenu = document.getElementById('game-selection-menu');
-        const gameSelectBtns = document.querySelectorAll('.game-select-btn');
-        const gameContainers = document.querySelectorAll('.game-container');
-        const backToMenuBtns = document.querySelectorAll('.back-to-menu-btn');
-
-        function showGameSelection() {
-            gameSelectionMenu.style.display = 'flex';
-            gameContainers.forEach(c => c.classList.add('hidden'));
-        }
-
-        function showGame(gameName) {
-            gameSelectionMenu.style.display = 'none';
-            gameContainers.forEach(c => {
-                c.classList.toggle('hidden', c.id !== `${gameName}-container`);
-                c.classList.toggle('flex', c.id === `${gameName}-container`);
-            });
-            if (gameName === 'breakout-game') {
-                initBreakoutGame();
-            } else if (gameName === 'connect-four') {
-                initConnectFourGame();
+                loadData();
+                renderCaddie();
             }
-        }
 
-        gameSelectBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const game = btn.dataset.game;
-                if (game === 'breakout') {
-                    showGame('breakout-game');
+            // --- GAMES APP LOGIC ---
+            const gameSelectionMenu = document.getElementById('game-selection-menu');
+            const gameSelectBtns = document.querySelectorAll('.game-select-btn');
+            const gameContainers = document.querySelectorAll('.game-container');
+            const backToMenuBtns = document.querySelectorAll('.back-to-menu-btn');
+
+            function showGameSelection() {
+                if (activeGameLoop) {
+                    cancelAnimationFrame(activeGameLoop);
+                    activeGameLoop = null;
+                }
+                gameSelectionMenu.style.display = 'flex';
+                gameContainers.forEach(c => c.classList.add('hidden'));
+            }
+
+            function showGame(gameName) {
+                if (activeGameLoop) {
+                    cancelAnimationFrame(activeGameLoop);
+                    activeGameLoop = null;
+                }
+                gameSelectionMenu.style.display = 'none';
+                gameContainers.forEach(c => {
+                    c.classList.toggle('hidden', c.id !== `${gameName}-container`);
+                    c.classList.toggle('flex', c.id === `${gameName}-container`);
+                });
+                if (gameName === 'breakout-game') {
                     initBreakoutGame();
-                } else if (game === 'connect-four') {
-                    showGame('connect-four');
+                } else if (gameName === 'connect-four') {
                     initConnectFourGame();
                 }
+            }
+
+            gameSelectBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const game = btn.dataset.game;
+                    if (game === 'breakout') {
+                        showGame('breakout-game');
+                    } else if (game === 'connect-four') {
+                        showGame('connect-four');
+                    }
+                });
             });
-        });
-        
-        backToMenuBtns.forEach(btn => {
-            btn.addEventListener('click', showGameSelection);
-        });
-
-        // --- BREAKOUT GAME INITIALIZATION ---
-        function initBreakoutGame() {
-            const canvas = document.getElementById('breakoutCanvas');
-            const ctx = canvas.getContext('2d');
-            const scoreEl = document.getElementById('score');
-            const livesEl = document.getElementById('lives');
-            const levelEl = document.getElementById('level-display');
-            const modal = document.getElementById('modal');
-            const modalText = document.getElementById('modal-text');
-            const modalSubtitle = document.getElementById('modal-subtitle');
-            const startBtn = document.getElementById('start-btn');
-
-            let score = 0, lives = 3, level = 1;
-            let gameState = 'start-screen';
-            let levelTransitionEndTime = 0;
-            const baseWidth = 480, baseHeight = 640;
-            let scale = 1;
-            let extraLifeDroppedThisLevel = false;
-            let lifeLostThisLevel = false;
-            let hasUsedExtraLifeChance = false;
-
-            let powerUpState = { isFireballShooter: false, fireballShooterEndTime: 0, nextFireballTime: 0, isBallShooter: false, ballShooterEndTime: 0, nextBallTime: 0, isFastBall: false, fastBallEndTime: 0 };
-            let balls = [], bricks = [], powerUps = [], fireballs = [];
-            const paddle = { x: 0, y: 0, width: 100, height: 10, color: '#FF00FF', baseWidth: 100 };
-            const enemyAIPaddle = { x: 0, y: 0, width: 100, height: 10, color: '#FF4500', active: false };
-            const cornerBumperSize = 30;
-            const brickInfo = { rowCount: 7, columnCount: 7, width: 55, height: 20, padding: 10, offsetTop: 50 };
-            const brickColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
-            const multiHitColors = { 3: '#FFD700', 2: '#C0C0C0', 1: '#CD7F32' };
-
-            let synth, metalSynth, brickHitSynth, brickBreakSynth, megatronSynth, audioInitialized = false;
-            let lastSoundTime = 0;
-
-            function playSoundSafe(synth, ...args) {
-                if (!audioInitialized || !synth) return;
-                try {
-                    let time = Tone.now();
-                    if (time <= lastSoundTime) {
-                        time = lastSoundTime + 0.01;
-                    }
-                    synth.triggerAttackRelease(...args, time);
-                    lastSoundTime = time;
-                } catch (e) {
-                    console.error("Error playing sound:", e);
-                }
-            }
-
-            function initAudio() {
-                if (audioInitialized) return;
-                try {
-                    if (Tone.context.state !== 'running') { Tone.start(); }
-                    synth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.2 } }).toDestination();
-                    metalSynth = new Tone.MetalSynth({ frequency: 100, envelope: { attack: 0.01, decay: 0.2, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination();
-                    brickHitSynth = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1 } }).toDestination();
-                    brickBreakSynth = new Tone.NoiseSynth({ noise: { type: 'brown' }, volume: -12, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination();
-                    megatronSynth = new Tone.FMSynth({ harmonicity: 3, modulationIndex: 14, detune: 0, oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.4 }, modulation: { type: 'sine' }, modulationEnvelope: { attack: 0.05, decay: 0.1, sustain: 0.8, release: 0.4 } }).toDestination();
-                    audioInitialized = true;
-                    lastSoundTime = 0;
-                } catch (e) { console.error("Could not initialize audio:", e); }
-            }
-
-            function resizeAndScale() {
-                const { width, height } = canvas.getBoundingClientRect();
-                canvas.width = width; canvas.height = height;
-                scale = Math.min(width / baseWidth, height / baseHeight);
-                paddle.width = paddle.baseWidth * scale;
-                paddle.height = 10 * scale;
-                enemyAIPaddle.width = 100 * scale;
-                enemyAIPaddle.height = 10 * scale;
-                brickInfo.width = 55 * scale;
-                brickInfo.height = 20 * scale;
-                brickInfo.padding = 10 * scale;
-                brickInfo.offsetTop = 60 * scale;
-                brickInfo.offsetLeft = (canvas.width - (brickInfo.columnCount * (brickInfo.width + brickInfo.padding) - brickInfo.padding)) / 2;
-                paddle.y = canvas.height - 30 * scale;
-                enemyAIPaddle.y = canvas.height / 3;
-            }
-
-            function createBricks(currentLevel) {
-                bricks = [];
-                const layouts = [
-                    (c, r) => ({ health: 1, color: brickColors[r] }),
-                    (c, r) => { if (r >= 3 && c >= r - 3 && c <= 9 - r) { const health = (r === 3 || c === r - 3 || c === 9 - r) ? 2 : 1; return { health, color: health === 2 ? multiHitColors[2] : brickColors[r] }; } return null; },
-                    (c, r) => { if ((c + r) % 2 === 0) { const health = (c > 1 && c < 5 && r > 1 && r < 5) ? 3 : 1; return { health, color: health === 3 ? multiHitColors[3] : brickColors[r] }; } return null; },
-                    (c, r) => { if (c === 0 || c === 6 || r === 0 || r === 6) return { health: 2, color: multiHitColors[2] }; if (c === 1 || c === 5 || r === 1 || r === 5) return { health: 1, color: brickColors[r] }; if (c > 1 && c < 5 && r > 1 && r < 5) return { health: 3, color: multiHitColors[3] }; return null; },
-                    (c, r) => { if (c % 2 === 0) { const health = r < 2 ? 2 : 1; return { health, color: health === 2 ? multiHitColors[2] : brickColors[r] }; } return null; },
-                    (c, r) => { if ((r === 1 || r === 2) && (c === 1 || c === 5)) return { health: 2, color: multiHitColors[2] }; if (r === 4 && c > 0 && c < 6) return { health: 1, color: brickColors[1] }; if (r === 5 && (c === 1 || c === 5)) return { health: 1, color: brickColors[1] }; return null; },
-                    (c, r) => { if (c === 0 || c === 6 || r === 0) return { health: 3, color: multiHitColors[3] }; if (r > 2 && (c === 2 || c === 4)) return { health: 2, color: multiHitColors[2] }; if (r === 4 && c === 3) return { health: 1, color: brickColors[0] }; return null; },
-                    (c, r) => { if ((c === 1 && r === 1) || (c === 5 && r === 1) || (c === 3 && r === 4) || (c === 1 && r === 6) || (c === 5 && r === 6)) return { health: 3, color: multiHitColors[3] }; return null; },
-                    (c, r) => { const health = (c + r) % 2 === 0 ? 3 : 1; return { health, color: health === 3 ? multiHitColors[3] : brickColors[r] }; },
-                    (c, r) => ({ health: 3, color: multiHitColors[3] })
-                ];
-                const layoutFunc = layouts[Math.min(currentLevel - 1, layouts.length - 1)];
-                for (let c = 0; c < brickInfo.columnCount; c++) {
-                    bricks[c] = [];
-                    for (let r = 0; r < brickInfo.rowCount; r++) {
-                        const brickProps = layoutFunc(c, r);
-                        if (brickProps) {
-                            const brickX = c * (brickInfo.width + brickInfo.padding) + brickInfo.offsetLeft;
-                            const brickY = r * (brickInfo.height + brickInfo.padding) + brickInfo.offsetTop;
-                            bricks[c][r] = { x: brickX, y: brickY, status: 1, initialHealth: brickProps.health, ...brickProps };
-                        } else {
-                            bricks[c][r] = { status: 0 };
-                        }
-                    }
-                }
-            }
-
-            function createBall(x, y, dx, dy, type = 'normal') {
-                let newBall = { x, y, radius: 8 * scale, dx: dx * scale, dy: dy * scale, type, isFast: false };
-                if (powerUpState.isFastBall) {
-                    newBall.isFast = true;
-                    newBall.dx *= 1.5;
-                    newBall.dy *= 1.5;
-                }
-                return newBall;
-            }
-
-            function createFireball() {
-                fireballs.push({ x: paddle.x + paddle.width / 2, y: paddle.y, radius: 6 * scale, dy: -8 * scale, color: '#FF4500' });
-                playSoundSafe(synth, "A5", "16n");
-            }
-
-            function shootExtraBall() {
-                balls.push(createBall(paddle.x + paddle.width / 2, paddle.y, (Math.random() - 0.5) * 4, -4));
-                playSoundSafe(synth, "G5", "16n");
-            }
-
-            function createPowerUp(x, y) {
-                let type;
-                const symbols = { 'enlarge': 'E', 'super-ball': 'S', 'multi-ball': 'M', 'extra-life': '+', 'fast-ball': 'F', 'fireball-shooter': 'C', 'ball-shooter': 'B' };
-                if (!extraLifeDroppedThisLevel && Math.random() < 0.1) {
-                    type = 'extra-life';
-                    extraLifeDroppedThisLevel = true;
-                } else {
-                    const rand = Math.random();
-                    if (rand < 0.30) { type = 'multi-ball'; }
-                    else {
-                        const remainingTypes = ['enlarge', 'super-ball', 'fast-ball', 'fireball-shooter', 'ball-shooter'];
-                        type = remainingTypes[Math.floor(Math.random() * remainingTypes.length)];
-                    }
-                }
-                if (type) {
-                    powerUps.push({ x, y, type, symbol: symbols[type], size: 15 * scale, dy: 2 * scale });
-                }
-            }
-
-            function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawBricks();
-                drawPaddle();
-                if (enemyAIPaddle.active) drawEnemyAIPaddle();
-                drawPowerUps();
-                drawBalls();
-                drawFireballs();
-                drawCornerBumpers();
-            }
-
-            function drawCornerBumpers() { const size = cornerBumperSize * scale; ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(0, canvas.height - size); ctx.lineTo(size, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height - size); ctx.lineTo(canvas.width - size, canvas.height); ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill(); }
-            function drawBalls() { balls.forEach(ball => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fillStyle = ball.type === 'super' ? '#FFA500' : '#00FFFF'; ctx.fill(); ctx.closePath(); }); }
-            function drawFireballs() { fireballs.forEach(fb => { ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.radius, 0, Math.PI * 2); ctx.fillStyle = fb.color; ctx.fill(); ctx.closePath(); }); }
-            function drawPaddle() { ctx.beginPath(); ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height); ctx.fillStyle = paddle.color; ctx.fill(); ctx.closePath(); }
-            function drawEnemyAIPaddle() { ctx.beginPath(); ctx.rect(enemyAIPaddle.x, enemyAIPaddle.y, enemyAIPaddle.width, enemyAIPaddle.height); ctx.fillStyle = enemyAIPaddle.color; ctx.fill(); ctx.closePath(); }
-            function drawBricks() { bricks.flat().forEach(b => { if (b.status === 1) { ctx.beginPath(); ctx.rect(b.x, b.y, brickInfo.width, brickInfo.height); ctx.fillStyle = b.health > 1 ? multiHitColors[b.health] : b.color; ctx.fill(); ctx.closePath(); } }); }
-            function drawPowerUps() { powerUps.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = '#FF00FF'; ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.font = `bold ${p.size}px 'Press Start 2P'`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.symbol, p.x, p.y); ctx.closePath(); }); }
-
-            function update() {
-                let powerUpsToActivate = [];
-                moveBalls();
-                updateFireballs();
-                powerUpsToActivate = updatePowerUps();
-                powerUpsToActivate.forEach(type => activatePowerUp(type));
-                updateActivePowerUps();
-                if (enemyAIPaddle.active) updateEnemyAIPaddle();
-            }
-
-            function updateEnemyAIPaddle() { let targetBall = balls.reduce((lowest, ball) => ball.y > lowest.y ? ball : lowest, {y: -Infinity}); if(targetBall.y !== -Infinity) { enemyAIPaddle.x += (targetBall.x - (enemyAIPaddle.x + enemyAIPaddle.width / 2)) * 0.12; } if (enemyAIPaddle.x < 0) enemyAIPaddle.x = 0; if (enemyAIPaddle.x + enemyAIPaddle.width > canvas.width) enemyAIPaddle.x = canvas.width - enemyAIPaddle.width; }
-            function moveBalls() {
-                const collisions = [];
-                balls.forEach(ball => {
-                    ball.x += ball.dx;
-                    ball.y += ball.dy;
-                    if (ball.x > canvas.width - ball.radius || ball.x < ball.radius) { ball.dx = -ball.dx; }
-                    if (ball.y < ball.radius) { ball.dy = -ball.dy; }
-                    const size = cornerBumperSize * scale;
-                    if (ball.y > canvas.height - size) {
-                        if (ball.x < size && ball.dy > 0) { ball.dx = Math.abs(ball.dy); ball.dy = -Math.abs(ball.dx); playSoundSafe(synth, "E4", "8n"); }
-                        if (ball.x > canvas.width - size && ball.dy > 0) { ball.dx = -Math.abs(ball.dy); ball.dy = -Math.abs(ball.dx); playSoundSafe(synth, "E4", "8n"); }
-                    }
-                    if (enemyAIPaddle.active && ball.y < enemyAIPaddle.y + enemyAIPaddle.height + ball.radius && ball.dy < 0) { if (ball.x > enemyAIPaddle.x && ball.x < enemyAIPaddle.x + enemyAIPaddle.width) { ball.dy = -ball.dy; playSoundSafe(synth, "G3", "8n"); } }
-                    if (ball.y > paddle.y - ball.radius && ball.y < paddle.y + paddle.height && ball.x > paddle.x && ball.x < paddle.x + paddle.width) { let collidePoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2); let currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy); let angle; if (Math.abs(collidePoint) < 0.1) { angle = (collidePoint >= 0 ? 1 : -1) * (Math.PI / 8); } else { angle = collidePoint * (Math.PI / 3); } ball.dx = currentSpeed * Math.sin(angle); ball.dy = -currentSpeed * Math.cos(angle); ball.y += ball.dy; playSoundSafe(synth, "C4", "8n"); }
-                    const hitBrick = brickCollisionDetection(ball);
-                    if (hitBrick) { collisions.push({ ball, brick: hitBrick }); }
-                });
-                collisions.forEach(({ ball, brick }) => resolveBrickCollision(ball, brick));
-                const initialBallCount = balls.length;
-                balls = balls.filter(ball => ball.y < canvas.height);
-                if (balls.length < initialBallCount && balls.length > 0) playSoundSafe(synth, "C3", "8n");
-                if (balls.length === 0 && gameState === 'playing') {
-                    lives--;
-                    lifeLostThisLevel = true;
-                    playSoundSafe(metalSynth, "C2", "4n");
-                    if (lives <= 0) gameOver(); else resetBallAndPaddle();
-                }
-            }
-
-            function updateFireballs() { fireballs.forEach((fb, index) => { fb.y += fb.dy; if (fb.y < 0) { fireballs.splice(index, 1); return; } for (const b of bricks.flat()) { if (b.status === 1 && fb.x > b.x && fb.x < b.x + brickInfo.width && fb.y > b.y && fb.y < b.y + brickInfo.height) { fireballs.splice(index, 1); handleBrickHit(b); return; } } }); }
-            function handleBrickHit(b) { if (b.status !== 1) return; b.health--; score += 10; if (b.health <= 0) { playSoundSafe(brickBreakSynth, "8n"); b.status = 0; score += 20; const isSpecialLevel = level >= 5 && level <= 8; const enemyChance = isSpecialLevel ? 0.10 : 0.03; let powerUpChance; if (b.initialHealth > 1) { powerUpChance = 0.80; } else { powerUpChance = isSpecialLevel ? 0.40 : 0.25; } if (Math.random() < enemyChance && !enemyAIPaddle.active) { activateEnemyAI(); } else if (Math.random() < powerUpChance) { createPowerUp(b.x + brickInfo.width / 2, b.y + brickInfo.height / 2); } } else { playSoundSafe(brickHitSynth, "C2", "8n"); } checkWin(); }
-            function brickCollisionDetection(ball) { for (const b of bricks.flat()) { if (b.status !== 1) continue; const closestX = Math.max(b.x, Math.min(ball.x, b.x + brickInfo.width)); const closestY = Math.max(b.y, Math.min(ball.y, b.y + brickInfo.height)); const distanceX = ball.x - closestX; const distanceY = ball.y - closestY; const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY); if (distanceSquared < (ball.radius * ball.radius)) { return b; } } return null; }
-            function resolveBrickCollision(ball, b) { if (b.status !== 1) return; if (ball.type !== 'super') { const closestX = Math.max(b.x, Math.min(ball.x, b.x + brickInfo.width)); const closestY = Math.max(b.y, Math.min(ball.y, b.y + brickInfo.height)); const distanceX = ball.x - closestX; const distanceY = ball.y - closestY; const overlapX = ball.radius - Math.abs(distanceX); const overlapY = ball.radius - Math.abs(distanceY); if (overlapX > overlapY) { ball.dy = -ball.dy; ball.y += ball.dy > 0 ? overlapY : -overlapY; } else { ball.dx = -ball.dx; ball.x += ball.dx > 0 ? overlapX : -overlapX; } } handleBrickHit(b); }
-            function updatePowerUps() { const collectedPowerUps = []; powerUps = powerUps.filter(p => { p.y += p.dy; if (p.y > paddle.y && p.x > paddle.x && p.x < paddle.x + paddle.width) { collectedPowerUps.push(p.type); return false; } return p.y < canvas.height; }); return collectedPowerUps; }
-            function updateActivePowerUps() { const now = Date.now(); if (powerUpState.isFireballShooter) { if (now > powerUpState.fireballShooterEndTime) { powerUpState.isFireballShooter = false; } else if (now > powerUpState.nextFireballTime) { createFireball(); powerUpState.nextFireballTime = now + 1000; } } if (powerUpState.isBallShooter) { if (now > powerUpState.ballShooterEndTime) { powerUpState.isBallShooter = false; } else if (now > powerUpState.nextBallTime) { shootExtraBall(); powerUpState.nextBallTime = now + 2000; } } if (powerUpState.isFastBall && now > powerUpState.fastBallEndTime) { powerUpState.isFastBall = false; balls.forEach(ball => { if (ball.isFast) { ball.dx /= 1.5; ball.dy /= 1.5; ball.isFast = false; } }); } }
-            function activatePowerUp(type) { playSoundSafe(synth, "C6", "8n"); if (type === 'enlarge') { paddle.baseWidth = 150; resizeAndScale(); setTimeout(() => { paddle.baseWidth = 100; resizeAndScale(); }, 10000); } else if (type === 'super-ball') { balls.forEach(b => b.type = 'super'); setTimeout(() => balls.forEach(b => b.type = 'normal'), 10000); } else if (type === 'multi-ball') { const originalBalls = [...balls]; originalBalls.forEach(b => { balls.push(createBall(b.x, b.y, b.dx + 1, b.dy)); balls.push(createBall(b.x, b.y, b.dx - 1, b.dy)); }); } else if (type === 'extra-life') { lives++; } else if (type === 'fast-ball') { if (!powerUpState.isFastBall) { balls.forEach(ball => { ball.dx *= 1.5; ball.dy *= 1.5; ball.isFast = true; }); } powerUpState.isFastBall = true; powerUpState.fastBallEndTime = Date.now() + 8000; } else if (type === 'fireball-shooter') { powerUpState.isFireballShooter = true; powerUpState.fireballShooterEndTime = Date.now() + 10000; powerUpState.nextFireballTime = Date.now(); } else if (type === 'ball-shooter') { powerUpState.isBallShooter = true; powerUpState.ballShooterEndTime = Date.now() + 10000; powerUpState.nextBallTime = Date.now(); } }
-            function activateEnemyAI() { enemyAIPaddle.active = true; if(audioInitialized) { const now = Tone.now(); megatronSynth.triggerAttackRelease("G2", "4n", now); megatronSynth.triggerAttackRelease("C3", "4n", now + 0.3); megatronSynth.triggerAttackRelease("F2", "2n", now + 0.6); } setTimeout(() => { enemyAIPaddle.active = false; }, 10000); }
-
-            function checkWin() { if (bricks.flat().every(b => b.status === 0)) { if (!lifeLostThisLevel) { lives++; } if (level === 10) { winGame(); return; } gameState = 'level-transition'; level++; powerUps = []; fireballs = []; powerUpState.isFireballShooter = false; powerUpState.isBallShooter = false; powerUpState.isFastBall = false; playSoundSafe(synth, "G5", "2n"); levelTransitionEndTime = Date.now() + 2500; } }
-            function startNextLevel() { extraLifeDroppedThisLevel = false; lifeLostThisLevel = false; createBricks(level); resetBallAndPaddle(); }
-            function resetBallAndPaddle() { balls = [createBall(canvas.width / 2, canvas.height - 50 * scale, 4 * (Math.random() > 0.5 ? 1 : -1), -4)]; paddle.x = (canvas.width - paddle.width) / 2; }
-            function resetGame() { score = 0; lives = 3; level = 1; powerUps = []; fireballs = []; powerUpState = { isFireballShooter: false, fireballShooterEndTime: 0, nextFireballTime: 0, isBallShooter: false, ballShooterEndTime: 0, nextBallTime: 0, isFastBall: false, fastBallEndTime: 0 }; enemyAIPaddle.active = false; extraLifeDroppedThisLevel = false; hasUsedExtraLifeChance = false; lifeLostThisLevel = false; resizeAndScale(); createBricks(level); resetBallAndPaddle(); }
-            function gameOver() { if (!hasUsedExtraLifeChance) { gameState = 'extra-life-prompt'; hasUsedExtraLifeChance = true; } else { gameState = 'game-over'; } }
-            function winGame() { gameState = 'game-won'; }
-            function startGame() { initAudio(); resetGame(); gameState = 'playing'; }
-
-            function loop() {
-                if (gameState === 'playing') { update(); } 
-                else if (gameState === 'level-transition') { if (Date.now() > levelTransitionEndTime) { startNextLevel(); gameState = 'playing'; } }
-                draw();
-                updateUI();
-                activeGameLoop = requestAnimationFrame(loop);
-            }
-
-            function updateUI() { scoreEl.textContent = `SCORE: ${score}`; livesEl.textContent = `LIVES: ${lives}`; levelEl.textContent = `LEVEL: ${level}`; if (gameState === 'start-screen' || gameState === 'game-over') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = gameState === 'start-screen' ? 'BREAKOUT' : 'GAME OVER'; modalSubtitle.textContent = gameState === 'start-screen' ? 'Deluxe Edition' : `Final Score: ${score}`; startBtn.textContent = gameState === 'start-screen' ? 'START GAME' : 'RESTART'; } else if (gameState === 'extra-life-prompt') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = "You're out of lives..."; modalSubtitle.textContent = "But you can have one more."; startBtn.textContent = "Admit you are a bitch"; } else if (gameState === 'game-won') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = "Congratu-Fucking-lations"; modalSubtitle.textContent = "You won!!!"; startBtn.textContent = "Play Again?"; } else if (gameState === 'level-transition') { modal.style.display = 'block'; startBtn.style.display = 'none'; modalText.textContent = `LEVEL ${level}`; modalSubtitle.textContent = "Get Ready!"; } else { modal.style.display = 'none'; } }
-            function movePaddle(x) { paddle.x = x - paddle.width / 2; if (paddle.x < 0) { paddle.x = 0; } if (paddle.x + paddle.width > canvas.width) { paddle.x = canvas.width - paddle.width; } }
-            function handleMove(e) { if (e.type.includes('touch')) { e.preventDefault(); } const rect = canvas.getBoundingClientRect(); const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; if (clientX === undefined) return; movePaddle(clientX - rect.left); }
-
-            canvas.addEventListener('mousemove', handleMove);
-            canvas.addEventListener('touchmove', handleMove, { passive: false });
-            canvas.addEventListener('touchstart', handleMove, { passive: false });
-            startBtn.addEventListener('click', () => { if (gameState === 'start-screen' || gameState === 'game-over' || gameState === 'game-won') { startGame(); } else if (gameState === 'extra-life-prompt') { lives = 1; resetBallAndPaddle(); gameState = 'playing'; } });
-            window.addEventListener('resize', () => { resizeAndScale(); draw(); updateUI(); });
             
-            resizeAndScale();
-            loop();
-        }
+            backToMenuBtns.forEach(btn => {
+                btn.addEventListener('click', showGameSelection);
+            });
 
-        // --- CONNECT FOUR GAME INITIALIZATION ---
-        function initConnectFourGame() {
-            const boardElement = document.getElementById('board');
-            const columnSelectorsElement = document.getElementById('column-selectors');
-            const statusElement = document.getElementById('status');
-            const newGameButton = document.getElementById('newGame');
-            const winnerModal = document.getElementById('winnerModal');
-            const winnerModalContent = winnerModal.querySelector('div');
-            const winnerText = document.getElementById('winnerText');
-            const playAgainButton = document.getElementById('playAgain');
+            // --- BREAKOUT GAME INITIALIZATION ---
+            function initBreakoutGame() {
+                const canvas = document.getElementById('breakoutCanvas');
+                const ctx = canvas.getContext('2d');
+                const scoreEl = document.getElementById('score');
+                const livesEl = document.getElementById('lives');
+                const levelEl = document.getElementById('level-display');
+                const modal = document.getElementById('modal');
+                const modalText = document.getElementById('modal-text');
+                const modalSubtitle = document.getElementById('modal-subtitle');
+                const startBtn = document.getElementById('start-btn');
 
-            const ROWS = 6;
-            const COLS = 7;
-            const HUMAN_PLAYER = 1;
-            const AI_PLAYER = 2;
-            let board = [];
-            let currentPlayer = HUMAN_PLAYER;
-            let gameOver = false;
+                let score = 0, lives = 3, level = 1;
+                let gameState = 'start-screen';
+                let levelTransitionEndTime = 0;
+                const baseWidth = 480, baseHeight = 640;
+                let scale = 1;
+                let extraLifeDroppedThisLevel = false;
+                let lifeLostThisLevel = false;
+                let hasUsedExtraLifeChance = false;
 
-            function createBoard() {
-                board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-                gameOver = false;
-                currentPlayer = HUMAN_PLAYER;
-                boardElement.innerHTML = '';
-                columnSelectorsElement.innerHTML = '';
-                for (let row = 0; row < ROWS; row++) {
+                let powerUpState = { isFireballShooter: false, fireballShooterEndTime: 0, nextFireballTime: 0, isBallShooter: false, ballShooterEndTime: 0, nextBallTime: 0, isFastBall: false, fastBallEndTime: 0 };
+                let balls = [], bricks = [], powerUps = [], fireballs = [];
+                const paddle = { x: 0, y: 0, width: 100, height: 10, color: '#FF00FF', baseWidth: 100 };
+                const enemyAIPaddle = { x: 0, y: 0, width: 100, height: 10, color: '#FF4500', active: false };
+                const cornerBumperSize = 30;
+                const brickInfo = { rowCount: 7, columnCount: 7, width: 55, height: 20, padding: 10, offsetTop: 50 };
+                const brickColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
+                const multiHitColors = { 3: '#FFD700', 2: '#C0C0C0', 1: '#CD7F32' };
+
+                let synth, metalSynth, brickHitSynth, brickBreakSynth, megatronSynth, audioInitialized = false;
+                let lastSoundTime = 0;
+
+                function playSoundSafe(synth, ...args) {
+                    if (!audioInitialized || !synth) return;
+                    try {
+                        let time = Tone.now();
+                        if (time <= lastSoundTime) {
+                            time = lastSoundTime + 0.05; // Increased offset
+                        }
+                        synth.triggerAttackRelease(...args, time);
+                        lastSoundTime = time;
+                    } catch (e) {
+                        // Fail silently if there's a rare scheduling conflict
+                    }
+                }
+
+                function initAudio() {
+                    if (audioInitialized) return;
+                    try {
+                        if (Tone.context.state !== 'running') { Tone.start(); }
+                        synth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.2 } }).toDestination();
+                        metalSynth = new Tone.MetalSynth({ frequency: 100, envelope: { attack: 0.01, decay: 0.2, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination();
+                        brickHitSynth = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1 } }).toDestination();
+                        brickBreakSynth = new Tone.NoiseSynth({ noise: { type: 'brown' }, volume: -12, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination();
+                        megatronSynth = new Tone.FMSynth({ harmonicity: 3, modulationIndex: 14, detune: 0, oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.4 }, modulation: { type: 'sine' }, modulationEnvelope: { attack: 0.05, decay: 0.1, sustain: 0.8, release: 0.4 } }).toDestination();
+                        audioInitialized = true;
+                        lastSoundTime = 0;
+                    } catch (e) { console.error("Could not initialize audio:", e); }
+                }
+
+                function resizeAndScale() {
+                    const { width, height } = canvas.getBoundingClientRect();
+                    canvas.width = width; canvas.height = height;
+                    scale = Math.min(width / baseWidth, height / baseHeight);
+                    paddle.width = paddle.baseWidth * scale;
+                    paddle.height = 10 * scale;
+                    enemyAIPaddle.width = 100 * scale;
+                    enemyAIPaddle.height = 10 * scale;
+                    brickInfo.width = 55 * scale;
+                    brickInfo.height = 20 * scale;
+                    brickInfo.padding = 10 * scale;
+                    brickInfo.offsetTop = 60 * scale;
+                    brickInfo.offsetLeft = (canvas.width - (brickInfo.columnCount * (brickInfo.width + brickInfo.padding) - brickInfo.padding)) / 2;
+                    paddle.y = canvas.height - 30 * scale;
+                    enemyAIPaddle.y = canvas.height / 3;
+                }
+
+                function createBricks(currentLevel) {
+                    bricks = [];
+                    const layouts = [
+                        (c, r) => ({ health: 1, color: brickColors[r] }),
+                        (c, r) => { if (r >= 3 && c >= r - 3 && c <= 9 - r) { const health = (r === 3 || c === r - 3 || c === 9 - r) ? 2 : 1; return { health, color: health === 2 ? multiHitColors[2] : brickColors[r] }; } return null; },
+                        (c, r) => { if ((c + r) % 2 === 0) { const health = (c > 1 && c < 5 && r > 1 && r < 5) ? 3 : 1; return { health, color: health === 3 ? multiHitColors[3] : brickColors[r] }; } return null; },
+                        (c, r) => { if (c === 0 || c === 6 || r === 0 || r === 6) return { health: 2, color: multiHitColors[2] }; if (c === 1 || c === 5 || r === 1 || r === 5) return { health: 1, color: brickColors[r] }; if (c > 1 && c < 5 && r > 1 && r < 5) return { health: 3, color: multiHitColors[3] }; return null; },
+                        (c, r) => { if (c % 2 === 0) { const health = r < 2 ? 2 : 1; return { health, color: health === 2 ? multiHitColors[2] : brickColors[r] }; } return null; },
+                        (c, r) => { if ((r === 1 || r === 2) && (c === 1 || c === 5)) return { health: 2, color: multiHitColors[2] }; if (r === 4 && c > 0 && c < 6) return { health: 1, color: brickColors[1] }; if (r === 5 && (c === 1 || c === 5)) return { health: 1, color: brickColors[1] }; return null; },
+                        (c, r) => { if (c === 0 || c === 6 || r === 0) return { health: 3, color: multiHitColors[3] }; if (r > 2 && (c === 2 || c === 4)) return { health: 2, color: multiHitColors[2] }; if (r === 4 && c === 3) return { health: 1, color: brickColors[0] }; return null; },
+                        (c, r) => { if ((c === 1 && r === 1) || (c === 5 && r === 1) || (c === 3 && r === 4) || (c === 1 && r === 6) || (c === 5 && r === 6)) return { health: 3, color: multiHitColors[3] }; return null; },
+                        (c, r) => { const health = (c + r) % 2 === 0 ? 3 : 1; return { health, color: health === 3 ? multiHitColors[3] : brickColors[r] }; },
+                        (c, r) => ({ health: 3, color: multiHitColors[3] })
+                    ];
+                    const layoutFunc = layouts[Math.min(currentLevel - 1, layouts.length - 1)];
+                    for (let c = 0; c < brickInfo.columnCount; c++) {
+                        bricks[c] = [];
+                        for (let r = 0; r < brickInfo.rowCount; r++) {
+                            const brickProps = layoutFunc(c, r);
+                            if (brickProps) {
+                                const brickX = c * (brickInfo.width + brickInfo.padding) + brickInfo.offsetLeft;
+                                const brickY = r * (brickInfo.height + brickInfo.padding) + brickInfo.offsetTop;
+                                bricks[c][r] = { x: brickX, y: brickY, status: 1, initialHealth: brickProps.health, ...brickProps };
+                            } else {
+                                bricks[c][r] = { status: 0 };
+                            }
+                        }
+                    }
+                }
+
+                function createBall(x, y, dx, dy, type = 'normal') {
+                    let newBall = { x, y, radius: 8 * scale, dx: dx * scale, dy: dy * scale, type, isFast: false };
+                    if (powerUpState.isFastBall) {
+                        newBall.isFast = true;
+                        newBall.dx *= 1.5;
+                        newBall.dy *= 1.5;
+                    }
+                    return newBall;
+                }
+
+                function createFireball() {
+                    fireballs.push({ x: paddle.x + paddle.width / 2, y: paddle.y, radius: 6 * scale, dy: -8 * scale, color: '#FF4500' });
+                    playSoundSafe(synth, "A5", "16n");
+                }
+
+                function shootExtraBall() {
+                    balls.push(createBall(paddle.x + paddle.width / 2, paddle.y, (Math.random() - 0.5) * 4, -4));
+                    playSoundSafe(synth, "G5", "16n");
+                }
+
+                function createPowerUp(x, y) {
+                    let type;
+                    const symbols = { 'enlarge': 'E', 'super-ball': 'S', 'multi-ball': 'M', 'extra-life': '+', 'fast-ball': 'F', 'fireball-shooter': 'C', 'ball-shooter': 'B' };
+                    if (!extraLifeDroppedThisLevel && Math.random() < 0.1) {
+                        type = 'extra-life';
+                        extraLifeDroppedThisLevel = true;
+                    } else {
+                        const rand = Math.random();
+                        if (rand < 0.30) { type = 'multi-ball'; }
+                        else {
+                            const remainingTypes = ['enlarge', 'super-ball', 'fast-ball', 'fireball-shooter', 'ball-shooter'];
+                            type = remainingTypes[Math.floor(Math.random() * remainingTypes.length)];
+                        }
+                    }
+                    if (type) {
+                        powerUps.push({ x, y, type, symbol: symbols[type], size: 15 * scale, dy: 2 * scale });
+                    }
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawBricks();
+                    drawPaddle();
+                    if (enemyAIPaddle.active) drawEnemyAIPaddle();
+                    drawPowerUps();
+                    drawBalls();
+                    drawFireballs();
+                    drawCornerBumpers();
+                }
+
+                function drawCornerBumpers() { const size = cornerBumperSize * scale; ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(0, canvas.height - size); ctx.lineTo(size, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height - size); ctx.lineTo(canvas.width - size, canvas.height); ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill(); }
+                function drawBalls() { balls.forEach(ball => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fillStyle = ball.type === 'super' ? '#FFA500' : '#00FFFF'; ctx.fill(); ctx.closePath(); }); }
+                function drawFireballs() { fireballs.forEach(fb => { ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.radius, 0, Math.PI * 2); ctx.fillStyle = fb.color; ctx.fill(); ctx.closePath(); }); }
+                function drawPaddle() { ctx.beginPath(); ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height); ctx.fillStyle = paddle.color; ctx.fill(); ctx.closePath(); }
+                function drawEnemyAIPaddle() { ctx.beginPath(); ctx.rect(enemyAIPaddle.x, enemyAIPaddle.y, enemyAIPaddle.width, enemyAIPaddle.height); ctx.fillStyle = enemyAIPaddle.color; ctx.fill(); ctx.closePath(); }
+                function drawBricks() { bricks.flat().forEach(b => { if (b.status === 1) { ctx.beginPath(); ctx.rect(b.x, b.y, brickInfo.width, brickInfo.height); ctx.fillStyle = b.health > 1 ? multiHitColors[b.health] : b.color; ctx.fill(); ctx.closePath(); } }); }
+                function drawPowerUps() { powerUps.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = '#FF00FF'; ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.font = `bold ${p.size}px 'Press Start 2P'`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.symbol, p.x, p.y); ctx.closePath(); }); }
+
+                function update() {
+                    let powerUpsToActivate = [];
+                    moveBalls();
+                    updateFireballs();
+                    powerUpsToActivate = updatePowerUps();
+                    powerUpsToActivate.forEach(type => activatePowerUp(type));
+                    updateActivePowerUps();
+                    if (enemyAIPaddle.active) updateEnemyAIPaddle();
+                }
+
+                function updateEnemyAIPaddle() { let targetBall = balls.reduce((lowest, ball) => ball.y > lowest.y ? ball : lowest, {y: -Infinity}); if(targetBall.y !== -Infinity) { enemyAIPaddle.x += (targetBall.x - (enemyAIPaddle.x + enemyAIPaddle.width / 2)) * 0.12; } if (enemyAIPaddle.x < 0) enemyAIPaddle.x = 0; if (enemyAIPaddle.x + enemyAIPaddle.width > canvas.width) enemyAIPaddle.x = canvas.width - enemyAIPaddle.width; }
+                function moveBalls() {
+                    const collisions = [];
+                    balls.forEach(ball => {
+                        ball.x += ball.dx;
+                        ball.y += ball.dy;
+                        if (ball.x > canvas.width - ball.radius || ball.x < ball.radius) { ball.dx = -ball.dx; }
+                        if (ball.y < ball.radius) { ball.dy = -ball.dy; }
+                        const size = cornerBumperSize * scale;
+                        if (ball.y > canvas.height - size) {
+                            if (ball.x < size && ball.dy > 0) { ball.dx = Math.abs(ball.dy); ball.dy = -Math.abs(ball.dx); playSoundSafe(synth, "E4", "8n"); }
+                            if (ball.x > canvas.width - size && ball.dy > 0) { ball.dx = -Math.abs(ball.dy); ball.dy = -Math.abs(ball.dx); playSoundSafe(synth, "E4", "8n"); }
+                        }
+                        if (enemyAIPaddle.active && ball.y < enemyAIPaddle.y + enemyAIPaddle.height + ball.radius && ball.dy < 0) { if (ball.x > enemyAIPaddle.x && ball.x < enemyAIPaddle.x + enemyAIPaddle.width) { ball.dy = -ball.dy; playSoundSafe(synth, "G3", "8n"); } }
+                        if (ball.y > paddle.y - ball.radius && ball.y < paddle.y + paddle.height && ball.x > paddle.x && ball.x < paddle.x + paddle.width) { let collidePoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2); let currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy); let angle; if (Math.abs(collidePoint) < 0.1) { angle = (collidePoint >= 0 ? 1 : -1) * (Math.PI / 8); } else { angle = collidePoint * (Math.PI / 3); } ball.dx = currentSpeed * Math.sin(angle); ball.dy = -currentSpeed * Math.cos(angle); ball.y += ball.dy; playSoundSafe(synth, "C4", "8n"); }
+                        const hitBrick = brickCollisionDetection(ball);
+                        if (hitBrick) { collisions.push({ ball, brick: hitBrick }); }
+                    });
+                    collisions.forEach(({ ball, brick }) => resolveBrickCollision(ball, brick));
+                    const initialBallCount = balls.length;
+                    balls = balls.filter(ball => ball.y < canvas.height);
+                    if (balls.length < initialBallCount && balls.length > 0) playSoundSafe(synth, "C3", "8n");
+                    if (balls.length === 0 && gameState === 'playing') {
+                        lives--;
+                        lifeLostThisLevel = true;
+                        playSoundSafe(metalSynth, "C2", "4n");
+                        if (lives <= 0) gameOver(); else resetBallAndPaddle();
+                    }
+                }
+
+                function updateFireballs() { fireballs.forEach((fb, index) => { fb.y += fb.dy; if (fb.y < 0) { fireballs.splice(index, 1); return; } for (const b of bricks.flat()) { if (b.status === 1 && fb.x > b.x && fb.x < b.x + brickInfo.width && fb.y > b.y && fb.y < b.y + brickInfo.height) { fireballs.splice(index, 1); handleBrickHit(b); return; } } }); }
+                function handleBrickHit(b) { if (b.status !== 1) return; b.health--; score += 10; if (b.health <= 0) { playSoundSafe(brickBreakSynth, "8n"); b.status = 0; score += 20; const isSpecialLevel = level >= 5 && level <= 8; const enemyChance = isSpecialLevel ? 0.10 : 0.03; let powerUpChance; if (b.initialHealth > 1) { powerUpChance = 0.80; } else { powerUpChance = isSpecialLevel ? 0.40 : 0.25; } if (Math.random() < enemyChance && !enemyAIPaddle.active) { activateEnemyAI(); } else if (Math.random() < powerUpChance) { createPowerUp(b.x + brickInfo.width / 2, b.y + brickInfo.height / 2); } } else { playSoundSafe(brickHitSynth, "C2", "8n"); } checkWin(); }
+                function brickCollisionDetection(ball) { for (const b of bricks.flat()) { if (b.status !== 1) continue; const closestX = Math.max(b.x, Math.min(ball.x, b.x + brickInfo.width)); const closestY = Math.max(b.y, Math.min(ball.y, b.y + brickInfo.height)); const distanceX = ball.x - closestX; const distanceY = ball.y - closestY; const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY); if (distanceSquared < (ball.radius * ball.radius)) { return b; } } return null; }
+                function resolveBrickCollision(ball, b) { if (b.status !== 1) return; if (ball.type !== 'super') { const closestX = Math.max(b.x, Math.min(ball.x, b.x + brickInfo.width)); const closestY = Math.max(b.y, Math.min(ball.y, b.y + brickInfo.height)); const distanceX = ball.x - closestX; const distanceY = ball.y - closestY; const overlapX = ball.radius - Math.abs(distanceX); const overlapY = ball.radius - Math.abs(distanceY); if (overlapX > overlapY) { ball.dy = -ball.dy; ball.y += ball.dy > 0 ? overlapY : -overlapY; } else { ball.dx = -ball.dx; ball.x += ball.dx > 0 ? overlapX : -overlapX; } } handleBrickHit(b); }
+                function updatePowerUps() { const collectedPowerUps = []; powerUps = powerUps.filter(p => { p.y += p.dy; if (p.y > paddle.y && p.x > paddle.x && p.x < paddle.x + paddle.width) { collectedPowerUps.push(p.type); return false; } return p.y < canvas.height; }); return collectedPowerUps; }
+                function updateActivePowerUps() { const now = Date.now(); if (powerUpState.isFireballShooter) { if (now > powerUpState.fireballShooterEndTime) { powerUpState.isFireballShooter = false; } else if (now > powerUpState.nextFireballTime) { createFireball(); powerUpState.nextFireballTime = now + 1000; } } if (powerUpState.isBallShooter) { if (now > powerUpState.ballShooterEndTime) { powerUpState.isBallShooter = false; } else if (now > powerUpState.nextBallTime) { shootExtraBall(); powerUpState.nextBallTime = now + 2000; } } if (powerUpState.isFastBall && now > powerUpState.fastBallEndTime) { powerUpState.isFastBall = false; balls.forEach(ball => { if (ball.isFast) { ball.dx /= 1.5; ball.dy /= 1.5; ball.isFast = false; } }); } }
+                function activatePowerUp(type) { playSoundSafe(synth, "C6", "8n"); if (type === 'enlarge') { paddle.baseWidth = 150; resizeAndScale(); setTimeout(() => { paddle.baseWidth = 100; resizeAndScale(); }, 10000); } else if (type === 'super-ball') { balls.forEach(b => b.type = 'super'); setTimeout(() => balls.forEach(b => b.type = 'normal'), 10000); } else if (type === 'multi-ball') { const originalBalls = [...balls]; originalBalls.forEach(b => { balls.push(createBall(b.x, b.y, b.dx + 1, b.dy)); balls.push(createBall(b.x, b.y, b.dx - 1, b.dy)); }); } else if (type === 'extra-life') { lives++; } else if (type === 'fast-ball') { if (!powerUpState.isFastBall) { balls.forEach(ball => { ball.dx *= 1.5; ball.dy *= 1.5; ball.isFast = true; }); } powerUpState.isFastBall = true; powerUpState.fastBallEndTime = Date.now() + 8000; } else if (type === 'fireball-shooter') { powerUpState.isFireballShooter = true; powerUpState.fireballShooterEndTime = Date.now() + 10000; powerUpState.nextFireballTime = Date.now(); } else if (type === 'ball-shooter') { powerUpState.isBallShooter = true; powerUpState.ballShooterEndTime = Date.now() + 10000; powerUpState.nextBallTime = Date.now(); } }
+                function activateEnemyAI() { enemyAIPaddle.active = true; if(audioInitialized) { const now = Tone.now(); megatronSynth.triggerAttackRelease("G2", "4n", now); megatronSynth.triggerAttackRelease("C3", "4n", now + 0.3); megatronSynth.triggerAttackRelease("F2", "2n", now + 0.6); } setTimeout(() => { enemyAIPaddle.active = false; }, 10000); }
+
+                function checkWin() { if (bricks.flat().every(b => b.status === 0)) { if (!lifeLostThisLevel) { lives++; } if (level === 10) { winGame(); return; } gameState = 'level-transition'; level++; powerUps = []; fireballs = []; powerUpState.isFireballShooter = false; powerUpState.isBallShooter = false; powerUpState.isFastBall = false; playSoundSafe(synth, "G5", "2n"); levelTransitionEndTime = Date.now() + 2500; } }
+                function startNextLevel() { extraLifeDroppedThisLevel = false; lifeLostThisLevel = false; createBricks(level); resetBallAndPaddle(); }
+                function resetBallAndPaddle() { balls = [createBall(canvas.width / 2, canvas.height - 50 * scale, 4 * (Math.random() > 0.5 ? 1 : -1), -4)]; paddle.x = (canvas.width - paddle.width) / 2; }
+                function resetGame() { score = 0; lives = 3; level = 1; powerUps = []; fireballs = []; powerUpState = { isFireballShooter: false, fireballShooterEndTime: 0, nextFireballTime: 0, isBallShooter: false, ballShooterEndTime: 0, nextBallTime: 0, isFastBall: false, fastBallEndTime: 0 }; enemyAIPaddle.active = false; extraLifeDroppedThisLevel = false; hasUsedExtraLifeChance = false; lifeLostThisLevel = false; resizeAndScale(); createBricks(level); resetBallAndPaddle(); }
+                function gameOver() { if (!hasUsedExtraLifeChance) { gameState = 'extra-life-prompt'; hasUsedExtraLifeChance = true; } else { gameState = 'game-over'; } }
+                function winGame() { gameState = 'game-won'; }
+                function startGame() { initAudio(); resetGame(); gameState = 'playing'; }
+
+                function loop() {
+                    if (gameState === 'playing') { update(); } 
+                    else if (gameState === 'level-transition') { if (Date.now() > levelTransitionEndTime) { startNextLevel(); gameState = 'playing'; } }
+                    draw();
+                    updateUI();
+                    activeGameLoop = requestAnimationFrame(loop);
+                }
+
+                function updateUI() { scoreEl.textContent = `SCORE: ${score}`; livesEl.textContent = `LIVES: ${lives}`; levelEl.textContent = `LEVEL: ${level}`; if (gameState === 'start-screen' || gameState === 'game-over') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = gameState === 'start-screen' ? 'BREAKOUT' : 'GAME OVER'; modalSubtitle.textContent = gameState === 'start-screen' ? 'Deluxe Edition' : `Final Score: ${score}`; startBtn.textContent = gameState === 'start-screen' ? 'START GAME' : 'RESTART'; } else if (gameState === 'extra-life-prompt') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = "You're out of lives..."; modalSubtitle.textContent = "But you can have one more."; startBtn.textContent = "Admit you are a bitch"; } else if (gameState === 'game-won') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = "Congratu-Fucking-lations"; modalSubtitle.textContent = "You won!!!"; startBtn.textContent = "Play Again?"; } else if (gameState === 'level-transition') { modal.style.display = 'block'; startBtn.style.display = 'none'; modalText.textContent = `LEVEL ${level}`; modalSubtitle.textContent = "Get Ready!"; } else { modal.style.display = 'none'; } }
+                function movePaddle(x) { paddle.x = x - paddle.width / 2; if (paddle.x < 0) { paddle.x = 0; } if (paddle.x + paddle.width > canvas.width) { paddle.x = canvas.width - paddle.width; } }
+                function handleMove(e) { if (e.type.includes('touch')) { e.preventDefault(); } const rect = canvas.getBoundingClientRect(); const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; if (clientX === undefined) return; movePaddle(clientX - rect.left); }
+
+                canvas.addEventListener('mousemove', handleMove);
+                canvas.addEventListener('touchmove', handleMove, { passive: false });
+                canvas.addEventListener('touchstart', handleMove, { passive: false });
+                startBtn.addEventListener('click', () => { if (gameState === 'start-screen' || gameState === 'game-over' || gameState === 'game-won') { startGame(); } else if (gameState === 'extra-life-prompt') { lives = 1; resetBallAndPaddle(); gameState = 'playing'; } });
+                window.addEventListener('resize', () => { resizeAndScale(); draw(); updateUI(); });
+                
+                resizeAndScale();
+                loop();
+            }
+
+            // --- CONNECT FOUR GAME INITIALIZATION ---
+            function initConnectFourGame() {
+                const boardElement = document.getElementById('board');
+                const columnSelectorsElement = document.getElementById('column-selectors');
+                const statusElement = document.getElementById('status');
+                const newGameButton = document.getElementById('newGame');
+                const winnerModal = document.getElementById('winnerModal');
+                const winnerModalContent = winnerModal.querySelector('div');
+                const winnerText = document.getElementById('winnerText');
+                const playAgainButton = document.getElementById('playAgain');
+
+                const ROWS = 6;
+                const COLS = 7;
+                const HUMAN_PLAYER = 1;
+                const AI_PLAYER = 2;
+                let board = [];
+                let currentPlayer = HUMAN_PLAYER;
+                let gameOver = false;
+
+                function createBoard() {
+                    board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+                    gameOver = false;
+                    currentPlayer = HUMAN_PLAYER;
+                    boardElement.innerHTML = '';
+                    columnSelectorsElement.innerHTML = '';
+                    for (let row = 0; row < ROWS; row++) {
+                        for (let col = 0; col < COLS; col++) {
+                            const cell = document.createElement('div');
+                            cell.classList.add('cell');
+                            cell.dataset.row = row;
+                            cell.dataset.col = col;
+                            boardElement.appendChild(cell);
+                        }
+                    }
                     for (let col = 0; col < COLS; col++) {
-                        const cell = document.createElement('div');
-                        cell.classList.add('cell');
-                        cell.dataset.row = row;
-                        cell.dataset.col = col;
-                        boardElement.appendChild(cell);
+                        const column = document.createElement('div');
+                        column.classList.add('column');
+                        column.dataset.col = col;
+                        column.addEventListener('click', () => handleColumnClick(col));
+                        columnSelectorsElement.appendChild(column);
+                    }
+                    updateStatus();
+                    toggleColumnSelectors(true);
+                }
+
+                function handleColumnClick(col) {
+                    if (gameOver || currentPlayer !== HUMAN_PLAYER) return;
+                    const row = findAvailableRow(board, col);
+                    if (row === -1) return;
+                    dropPiece(row, col, HUMAN_PLAYER);
+                    if (gameOver) return;
+                    currentPlayer = AI_PLAYER;
+                    updateStatus();
+                    toggleColumnSelectors(false);
+                    setTimeout(aiMove, 500);
+                }
+
+                function aiMove() {
+                    statusElement.textContent = "Computer is thinking...";
+                    const { col } = minimax(board, 7, -Infinity, Infinity, true);
+                    if (col === null) {
+                        gameOver = true;
+                        showWinner("It's a Draw!");
+                        return;
+                    }
+                    const row = findAvailableRow(board, col);
+                    dropPiece(row, col, AI_PLAYER);
+                    if (gameOver) return;
+                    currentPlayer = HUMAN_PLAYER;
+                    updateStatus();
+                    toggleColumnSelectors(true);
+                }
+
+                function findAvailableRow(b, col) { for (let row = ROWS - 1; row >= 0; row--) { if (b[row][col] === 0) return row; } return -1; }
+                function dropPiece(row, col, player) {
+                    board[row][col] = player;
+                    const piece = document.createElement('div');
+                    piece.classList.add('piece', `player${player}`);
+                    const targetCell = document.querySelector(`#connect-four-container .cell[data-row='${row}'][data-col='${col}']`);
+                    targetCell.appendChild(piece);
+                    if (checkForWin(board, player)) {
+                        gameOver = true;
+                        if (player === HUMAN_PLAYER) { showWinner("You won! But I bet you can't do it again."); } 
+                        else { showWinner("The Computer Wins!"); }
+                        highlightWinningCells(board, player);
+                    } else if (isBoardFull(board)) {
+                        gameOver = true;
+                        showWinner("It's a Draw!");
                     }
                 }
-                for (let col = 0; col < COLS; col++) {
-                    const column = document.createElement('div');
-                    column.classList.add('column');
-                    column.dataset.col = col;
-                    column.addEventListener('click', () => handleColumnClick(col));
-                    columnSelectorsElement.appendChild(column);
-                }
-                updateStatus();
-                toggleColumnSelectors(true);
-            }
 
-            function handleColumnClick(col) {
-                if (gameOver || currentPlayer !== HUMAN_PLAYER) return;
-                const row = findAvailableRow(board, col);
-                if (row === -1) return;
-                dropPiece(row, col, HUMAN_PLAYER);
-                if (gameOver) return;
-                currentPlayer = AI_PLAYER;
-                updateStatus();
-                toggleColumnSelectors(false);
-                setTimeout(aiMove, 500);
-            }
-
-            function aiMove() {
-                statusElement.textContent = "Computer is thinking...";
-                const { col } = minimax(board, 7, -Infinity, Infinity, true);
-                if (col === null) {
-                    gameOver = true;
-                    showWinner("It's a Draw!");
-                    return;
+                function updateStatus() { if (gameOver) return; if (currentPlayer === HUMAN_PLAYER) { statusElement.textContent = "Your Turn (Red)"; statusElement.style.color = '#ef4444'; } else { statusElement.textContent = "Computer's Turn (Yellow)"; statusElement.style.color = '#facc15'; } }
+                function toggleColumnSelectors(enabled) { columnSelectorsElement.style.pointerEvents = enabled ? 'auto' : 'none'; }
+                function showWinner(message) { statusElement.textContent = message; winnerText.textContent = message; winnerModal.classList.remove('hidden'); winnerModal.classList.add('flex'); setTimeout(() => { winnerModalContent.style.transform = 'scale(1)'; winnerModalContent.style.opacity = '1'; }, 50); }
+                function isBoardFull(b) { return b[0].every(cell => cell !== 0); }
+                function checkForWin(b, player) { for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) return true; } } for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) return true; } } for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) return true; } } for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) return true; } } return false; }
+                function highlightWinningCells(b, player) {
+                    let winningLine = [];
+                    const findLine = () => {
+                        for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) return [{r,c},{r,c:c+1},{r,c:c+2},{r,c:c+3}]; } }
+                        for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) return [{r,c},{r:r+1,c},{r:r+2,c},{r:r+3,c}]; } }
+                        for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) return [{r,c},{r:r+1,c:c+1},{r:r+2,c:c+2},{r:r+3,c:c+3}]; } }
+                        for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) return [{r,c},{r:r-1,c:c+1},{r:r-2,c:c+2},{r:r-3,c:c+3}]; } }
+                        return [];
+                    };
+                    winningLine = findLine();
+                    winningLine.forEach(pos => {
+                        const cellElement = document.querySelector(`#connect-four-container .cell[data-row='${pos.r}'][data-col='${pos.c}']`);
+                        if (cellElement) cellElement.classList.add('winning-cell');
+                    });
                 }
-                const row = findAvailableRow(board, col);
-                dropPiece(row, col, AI_PLAYER);
-                if (gameOver) return;
-                currentPlayer = HUMAN_PLAYER;
-                updateStatus();
-                toggleColumnSelectors(true);
-            }
-
-            function findAvailableRow(b, col) { for (let row = ROWS - 1; row >= 0; row--) { if (b[row][col] === 0) return row; } return -1; }
-            function dropPiece(row, col, player) {
-                board[row][col] = player;
-                const piece = document.createElement('div');
-                piece.classList.add('piece', `player${player}`);
-                const targetCell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
-                targetCell.appendChild(piece);
-                if (checkForWin(board, player)) {
-                    gameOver = true;
-                    if (player === HUMAN_PLAYER) { showWinner("You won! But I bet you can't do it again."); } 
-                    else { showWinner("The Computer Wins!"); }
-                    highlightWinningCells(board, player);
-                } else if (isBoardFull(board)) {
-                    gameOver = true;
-                    showWinner("It's a Draw!");
+                function scorePosition(b, player) {
+                    let score = 0;
+                    const centerArray = b.map(row => row[Math.floor(COLS / 2)]);
+                    score += centerArray.filter(p => p === player).length * 6;
+                    const scoreLine = (line, p) => {
+                        let s = 0;
+                        const opponentPlayer = p === AI_PLAYER ? HUMAN_PLAYER : AI_PLAYER;
+                        const playerCount = line.filter(val => val === p).length;
+                        const emptyCount = line.filter(val => val === 0).length;
+                        const opponentCount = line.filter(val => val === opponentPlayer).length;
+                        if (playerCount === 4) s += 1000000;
+                        else if (playerCount === 3 && emptyCount === 1) s += 5000;
+                        else if (playerCount === 2 && emptyCount === 2) s += 50;
+                        if (opponentCount === 3 && emptyCount === 1) s -= 10000;
+                        return s;
+                    };
+                    for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine(b[r].slice(c, c + 4), player); } }
+                    for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { score += scoreLine([b[r][c], b[r+1][c], b[r+2][c], b[r+3][c]], player); } }
+                    for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine([b[r][c], b[r+1][c+1], b[r+2][c+2], b[r+3][c+3]], player); } }
+                    for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine([b[r][c], b[r-1][c+1], b[r-2][c+2], b[r-3][c+3]], player); } }
+                    return score;
                 }
-            }
-
-            function updateStatus() { if (gameOver) return; if (currentPlayer === HUMAN_PLAYER) { statusElement.textContent = "Your Turn (Red)"; statusElement.style.color = '#ef4444'; } else { statusElement.textContent = "Computer's Turn (Yellow)"; statusElement.style.color = '#facc15'; } }
-            function toggleColumnSelectors(enabled) { columnSelectorsElement.style.pointerEvents = enabled ? 'auto' : 'none'; }
-            function showWinner(message) { statusElement.textContent = message; winnerText.textContent = message; winnerModal.classList.remove('hidden'); winnerModal.classList.add('flex'); setTimeout(() => { winnerModalContent.style.transform = 'scale(1)'; winnerModalContent.style.opacity = '1'; }, 50); }
-            function isBoardFull(b) { return b[0].every(cell => cell !== 0); }
-            function checkForWin(b, player) { for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) return true; } } for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) return true; } } for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) return true; } } for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) return true; } } return false; }
-            function highlightWinningCells(b, player) {
-                let winningLine = [];
-                const findLine = () => {
-                    for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) return [{r,c},{r,c:c+1},{r,c:c+2},{r,c:c+3}]; } }
-                    for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) return [{r,c},{r:r+1,c},{r:r+2,c},{r:r+3,c}]; } }
-                    for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) return [{r,c},{r:r+1,c:c+1},{r:r+2,c:c+2},{r:r+3,c:c+3}]; } }
-                    for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) return [{r,c},{r:r-1,c:c+1},{r:r-2,c:c+2},{r:r-3,c:c+3}]; } }
-                    return [];
-                };
-                winningLine = findLine();
-                winningLine.forEach(pos => {
-                    const cellElement = document.querySelector(`.cell[data-row='${pos.r}'][data-col='${pos.c}']`);
-                    if (cellElement) cellElement.classList.add('winning-cell');
-                });
-            }
-            function scorePosition(b, player) {
-                let score = 0;
-                const centerArray = b.map(row => row[Math.floor(COLS / 2)]);
-                score += centerArray.filter(p => p === player).length * 6;
-                const scoreLine = (line, p) => {
-                    let s = 0;
-                    const opponentPlayer = p === AI_PLAYER ? HUMAN_PLAYER : AI_PLAYER;
-                    const playerCount = line.filter(val => val === p).length;
-                    const emptyCount = line.filter(val => val === 0).length;
-                    const opponentCount = line.filter(val => val === opponentPlayer).length;
-                    if (playerCount === 4) s += 1000000;
-                    else if (playerCount === 3 && emptyCount === 1) s += 5000;
-                    else if (playerCount === 2 && emptyCount === 2) s += 50;
-                    if (opponentCount === 3 && emptyCount === 1) s -= 10000;
-                    return s;
-                };
-                for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine(b[r].slice(c, c + 4), player); } }
-                for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { score += scoreLine([b[r][c], b[r+1][c], b[r+2][c], b[r+3][c]], player); } }
-                for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine([b[r][c], b[r+1][c+1], b[r+2][c+2], b[r+3][c+3]], player); } }
-                for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine([b[r][c], b[r-1][c+1], b[r-2][c+2], b[r-3][c+3]], player); } }
-                return score;
-            }
-            function getValidLocations(b) { return [...Array(COLS).keys()].filter(c => b[0][c] === 0); }
-            function minimax(b, depth, alpha, beta, maximizingPlayer) {
-                const isTerminal = checkForWin(b, HUMAN_PLAYER) || checkForWin(b, AI_PLAYER) || isBoardFull(b);
-                if (depth === 0 || isTerminal) {
-                    if (isTerminal) {
-                        if (checkForWin(b, AI_PLAYER)) return { col: null, score: 10000000 };
-                        if (checkForWin(b, HUMAN_PLAYER)) return { col: null, score: -10000000 };
-                        return { col: null, score: 0 };
-                    }
-                    return { col: null, score: scorePosition(b, AI_PLAYER) };
-                }
-                const validLocations = getValidLocations(b);
-                const columnOrder = [3, 4, 2, 5, 1, 6, 0];
-                const prioritizedLocations = columnOrder.filter(col => validLocations.includes(col));
-                if (maximizingPlayer) {
-                    let value = -Infinity;
-                    let column = prioritizedLocations[0];
-                    for (const col of prioritizedLocations) {
-                        let b_copy = b.map(r => [...r]);
-                        const row = findAvailableRow(b_copy, col);
-                        b_copy[row][col] = AI_PLAYER;
-                        let new_score = minimax(b_copy, depth - 1, alpha, beta, false).score;
-                        if (new_score > value) {
-                            value = new_score;
-                            column = col;
+                function getValidLocations(b) { return [...Array(COLS).keys()].filter(c => b[0][c] === 0); }
+                function minimax(b, depth, alpha, beta, maximizingPlayer) {
+                    const isTerminal = checkForWin(b, HUMAN_PLAYER) || checkForWin(b, AI_PLAYER) || isBoardFull(b);
+                    if (depth === 0 || isTerminal) {
+                        if (isTerminal) {
+                            if (checkForWin(b, AI_PLAYER)) return { col: null, score: 10000000 };
+                            if (checkForWin(b, HUMAN_PLAYER)) return { col: null, score: -10000000 };
+                            return { col: null, score: 0 };
                         }
-                        alpha = Math.max(alpha, value);
-                        if (alpha >= beta) break;
+                        return { col: null, score: scorePosition(b, AI_PLAYER) };
                     }
-                    return { col: column, score: value };
-                } else { // Minimizing player
-                    let value = Infinity;
-                    let column = prioritizedLocations[0];
-                    for (const col of prioritizedLocations) {
-                        let b_copy = b.map(r => [...r]);
-                        const row = findAvailableRow(b_copy, col);
-                        b_copy[row][col] = HUMAN_PLAYER;
-                        let new_score = minimax(b_copy, depth - 1, alpha, beta, true).score;
-                        if (new_score < value) {
-                            value = new_score;
-                            column = col;
+                    const validLocations = getValidLocations(b);
+                    const columnOrder = [3, 4, 2, 5, 1, 6, 0];
+                    const prioritizedLocations = columnOrder.filter(col => validLocations.includes(col));
+                    if (maximizingPlayer) {
+                        let value = -Infinity;
+                        let column = prioritizedLocations[0];
+                        for (const col of prioritizedLocations) {
+                            let b_copy = b.map(r => [...r]);
+                            const row = findAvailableRow(b_copy, col);
+                            b_copy[row][col] = AI_PLAYER;
+                            let new_score = minimax(b_copy, depth - 1, alpha, beta, false).score;
+                            if (new_score > value) {
+                                value = new_score;
+                                column = col;
+                            }
+                            alpha = Math.max(alpha, value);
+                            if (alpha >= beta) break;
                         }
-                        beta = Math.min(beta, value);
-                        if (alpha >= beta) break;
+                        return { col: column, score: value };
+                    } else { // Minimizing player
+                        let value = Infinity;
+                        let column = prioritizedLocations[0];
+                        for (const col of prioritizedLocations) {
+                            let b_copy = b.map(r => [...r]);
+                            const row = findAvailableRow(b_copy, col);
+                            b_copy[row][col] = HUMAN_PLAYER;
+                            let new_score = minimax(b_copy, depth - 1, alpha, beta, true).score;
+                            if (new_score < value) {
+                                value = new_score;
+                                column = col;
+                            }
+                            beta = Math.min(beta, value);
+                            if (alpha >= beta) break;
+                        }
+                        return { col: column, score: value };
                     }
-                    return { col: column, score: value };
                 }
-            }
-            function resetGame() {
-                winnerModal.classList.remove('flex');
-                winnerModal.classList.add('hidden');
+                function resetGame() {
+                    winnerModal.classList.remove('flex');
+                    winnerModal.classList.add('hidden');
+                    createBoard();
+                }
+                newGameButton.addEventListener('click', createBoard);
+                playAgainButton.addEventListener('click', resetGame);
                 createBoard();
             }
-            newGameButton.addEventListener('click', createBoard);
-            playAgainButton.addEventListener('click', resetGame);
-            createBoard();
-        }
 
-        // --- INITIALIZE ALL APPS ---
-        initFeedApp();
-        initGolfApp();
-        showPage('feed-page'); // Show the feed page by default
-    });
+            // --- INITIALIZE ALL APPS ---
+            initFeedApp();
+            initGolfApp();
+            showPage('feed-page'); // Show the feed page by default
+        });
     </script>
 </body>
 </html>
