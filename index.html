@@ -174,7 +174,7 @@
 
     <!-- Transition Screen -->
     <div id="transition-screen" class="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <h1 id="transition-text" class="text-3xl sm:text-4xl md:text-5xl font-bold text-green-500 text-center px-4 break-words" style="font-family: 'Press Start 2P', cursive;">BrettIsGay.com</h1>
+        <h1 id="transition-text" class="font-bold text-green-500 text-center px-4 break-words" style="font-family: 'Press Start 2P', cursive; font-size: clamp(1.5rem, 8vw, 3rem);">BrettIsGay.com</h1>
     </div>
 
     <!-- Page Container -->
@@ -1171,7 +1171,7 @@
             initFeedApp();
             initGolfApp();
             
-            // Start on the last visited page or feed page by default, without an initial transition
+            // Start on the last visited page or feed page by default
             const lastPage = localStorage.getItem('lastActivePage') || 'feed-page';
             showPage(lastPage);
         });
