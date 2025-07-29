@@ -42,9 +42,6 @@
         #transition-screen {
             transition: opacity 1s ease-in-out;
         }
-        #transition-screen.fade-out {
-            opacity: 0;
-        }
 
 
         /* Feed Page Styles */
@@ -177,7 +174,7 @@
 
     <!-- Transition Screen -->
     <div id="transition-screen" class="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <h1 id="transition-text" class="text-3xl md:text-5xl font-bold text-green-500 text-center px-4" style="font-family: 'Press Start 2P', cursive;">BrettIsGay.com</h1>
+        <h1 id="transition-text" class="text-3xl sm:text-4xl md:text-5xl font-bold text-green-500 text-center px-4 break-words" style="font-family: 'Press Start 2P', cursive;">BrettIsGay.com</h1>
     </div>
 
     <!-- Page Container -->
@@ -319,35 +316,52 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- TRANSITION SCREEN LOGIC ---
+            // --- ELEMENTS ---
             const transitionScreen = document.getElementById('transition-screen');
-            setTimeout(() => {
-                transitionScreen.classList.add('fade-out');
-                transitionScreen.addEventListener('transitionend', () => {
-                    transitionScreen.remove();
-                });
-            }, 2500); // 2.5 second delay
-
-            // --- MASTER PAGE NAVIGATION ---
             const navButtons = document.querySelectorAll('.nav-button');
             const pages = document.querySelectorAll('.page');
             let activeGameLoop = null;
 
+            // --- INITIAL LOAD TRANSITION ---
+            setTimeout(() => {
+                transitionScreen.style.opacity = '0';
+                transitionScreen.addEventListener('transitionend', () => {
+                    transitionScreen.style.display = 'none';
+                }, { once: true });
+            }, 1500); // Shortened initial load to 1.5 seconds
+
+            // --- MASTER PAGE NAVIGATION ---
             function showPage(pageId) {
+                const currentPage = document.querySelector('.page.active');
+                if (currentPage && currentPage.id === pageId) {
+                    return; // Don't do anything if clicking the current page's button
+                }
+
+                // Stop any running game loops
                 if (activeGameLoop) {
                     cancelAnimationFrame(activeGameLoop);
                     activeGameLoop = null;
                 }
 
-                pages.forEach(page => {
-                    page.classList.toggle('active', page.id === pageId);
-                });
+                // Hide all pages
+                pages.forEach(page => page.classList.remove('active'));
+                // Show the target page
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
+                }
+
+                // Update nav buttons
                 navButtons.forEach(button => {
                     const isSelected = button.dataset.page === pageId;
                     button.classList.toggle('text-blue-500', isSelected);
                     button.classList.toggle('text-gray-500', !isSelected);
                 });
-                
+
+                // Save the last page to local storage
+                localStorage.setItem('lastActivePage', pageId);
+
+                // Handle game page specific logic
                 if (pageId === 'games-page') {
                     showGameSelection();
                 }
@@ -1156,7 +1170,8 @@
             // --- INITIALIZE ALL APPS ---
             initFeedApp();
             initGolfApp();
-            // Start on the feed page after the transition
+            
+            // Start on the last visited page or feed page by default, without an initial transition
             const lastPage = localStorage.getItem('lastActivePage') || 'feed-page';
             showPage(lastPage);
         });
