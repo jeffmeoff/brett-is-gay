@@ -100,10 +100,26 @@
             align-items: center;
             padding: 0;
             overflow: hidden;
-            background-color: #111;
+            background-color: #000;
+            position: relative;
         }
         .game-container { display: none; }
         .game-container.active { display: flex; }
+        #game-selection-menu {
+            position: relative;
+            z-index: 10;
+        }
+        #matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #matrix-canvas.fullscreen {
+            z-index: 20;
+        }
 
         /* Breakout Game Styles */
         #breakout-game-container {
@@ -168,55 +184,61 @@
         <!-- Golf Caddie Page -->
         <div id="golf-page" class="page">
              <div id="golf-app-container" class="w-full max-w-md mx-auto p-4 pt-8 pb-12">
-                <!-- All Golf App content will be rendered here -->
+                 <!-- All Golf App content will be rendered here -->
              </div>
         </div>
 
         <!-- Games Page -->
         <div id="games-page" class="page">
+            <canvas id="matrix-canvas"></canvas>
+            <button id="matrix-back-btn" class="absolute top-4 left-4 z-30 text-white bg-black bg-opacity-50 p-2 rounded-full hidden back-to-menu-btn">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+
             <!-- Game Selection Menu -->
             <div id="game-selection-menu" class="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
                  <h1 class="text-5xl font-bold text-white" style="font-family: 'Press Start 2P', cursive;">SELECT GAME</h1>
                  <button data-game="breakout" class="game-select-btn text-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Breakout Deluxe</button>
                  <button data-game="connect-four" class="game-select-btn text-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Connect Four</button>
+                 <button data-game="matrix-mode" class="game-select-btn text-2xl bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Matrix Mode</button>
             </div>
 
             <!-- Breakout Game Container -->
             <div id="breakout-game-container" class="game-container hidden w-full h-full">
                  <button class="absolute top-2 left-2 z-50 text-white bg-black bg-opacity-50 p-2 rounded-full back-to-menu-btn">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <div id="game-wrapper">
-                    <div id="game-container">
-                        <canvas id="breakoutCanvas"></canvas>
-                        <div id="ui-overlay">
-                            <div id="score">SCORE: 0</div>
-                            <div id="level-display">LEVEL: 1</div>
-                            <div id="lives">LIVES: 3</div>
-                        </div>
-                        <div id="modal">
-                            <h2 id="modal-text">BREAKOUT</h2>
-                            <p id="modal-subtitle">Deluxe Edition</p>
-                            <button id="start-btn">START GAME</button>
-                        </div>
-                    </div>
-                </div>
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                 </button>
+                 <div id="game-wrapper">
+                     <div id="game-container">
+                         <canvas id="breakoutCanvas"></canvas>
+                         <div id="ui-overlay">
+                             <div id="score">SCORE: 0</div>
+                             <div id="level-display">LEVEL: 1</div>
+                             <div id="lives">LIVES: 3</div>
+                         </div>
+                         <div id="modal">
+                             <h2 id="modal-text">BREAKOUT</h2>
+                             <p id="modal-subtitle">Deluxe Edition</p>
+                             <button id="start-btn">START GAME</button>
+                         </div>
+                     </div>
+                 </div>
             </div>
 
             <!-- Connect Four Game Container -->
             <div id="connect-four-container" class="game-container hidden w-full h-full">
                  <button class="absolute top-2 left-2 z-50 text-black bg-white bg-opacity-50 p-2 rounded-full back-to-menu-btn">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <div class="w-full max-w-lg text-center mb-4">
-                    <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">Connect Four vs. AI</h1>
-                    <div id="status" class="text-lg md:text-xl h-8 font-semibold transition-colors duration-300 text-gray-800">Your Turn (Red)</div>
-                </div>
-                <div id="board-container">
-                    <div class="board" id="board"></div>
-                    <div id="column-selectors"></div>
-                </div>
-                <button id="newGame" class="mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200">New Game</button>
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                 </button>
+                 <div class="w-full max-w-lg text-center mb-4">
+                     <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">Connect Four vs. AI</h1>
+                     <div id="status" class="text-lg md:text-xl h-8 font-semibold transition-colors duration-300 text-gray-800">Your Turn (Red)</div>
+                 </div>
+                 <div id="board-container">
+                     <div class="board" id="board"></div>
+                     <div id="column-selectors"></div>
+                 </div>
+                 <button id="newGame" class="mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200">New Game</button>
             </div>
         </div>
     </div>
@@ -344,7 +366,7 @@
                     const rotation = Math.random() * 8 - 4; // between -4 and 4 degrees
                     article.style.transform = `rotate(${rotation}deg)`;
 
-                    const image = `<img src="${post.imageUrl}" alt="${post.caption}">`;
+                    const image = `<img src="${post.imageUrl}" alt="${post.caption}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/ccc/ffffff?text=Image+Not+Found';">`;
                     const caption = `<p class="caption">${post.caption}</p>`;
                     
                     article.innerHTML = image + caption;
@@ -522,7 +544,11 @@
                 document.getElementById('cancel-delete-round').addEventListener('click', () => hideModal('delete-round-modal'));
                 document.getElementById('confirm-delete-round').addEventListener('click', () => { if (state.roundToDeleteIndex !== null) { state.history.splice(state.roundToDeleteIndex, 1); saveHistory(); renderHistory(); state.roundToDeleteIndex = null; } hideModal('delete-round-modal'); });
                 document.getElementById('cancel-add-club').addEventListener('click', () => hideModal('add-club-modal'));
-                document.getElementById('confirm-add-club').addEventListener('click', () => { const name = document.getElementById('new-club-name').value.trim(); const min = parseInt(document.getElementById('new-club-min').value, 10); const max = parseInt(document.getElementById('new-club-max').value, 10); if (name && !isNaN(min) && !isNaN(max) && max >= min) { state.clubs.push({ name, min, max, order: state.clubs.length + 1 }); saveClubs(); document.getElementById('new-club-name').value = ''; document.getElementById('new-club-min').value = ''; document.getElementById('new-club-max').value = ''; hideModal('add-club-modal'); renderSettings(); } else { alert('Please enter a valid name and range (max >= min).'); } });
+                document.getElementById('confirm-add-club').addEventListener('click', () => { const name = document.getElementById('new-club-name').value.trim(); const min = parseInt(document.getElementById('new-club-min').value, 10); const max = parseInt(document.getElementById('new-club-max').value, 10); if (name && !isNaN(min) && !isNaN(max) && max >= min) { state.clubs.push({ name, min, max, order: state.clubs.length + 1 }); saveClubs(); document.getElementById('new-club-name').value = ''; document.getElementById('new-club-min').value = ''; document.getElementById('new-club-max').value = ''; hideModal('add-club-modal'); renderSettings(); } else { 
+                    // Using a custom modal for alerts would be better, but for simplicity:
+                    // alert('Please enter a valid name and range (max >= min).'); 
+                    console.error('Please enter a valid name and range (max >= min).');
+                } });
 
                 loadData();
                 renderCaddie();
@@ -533,6 +559,8 @@
             const gameSelectBtns = document.querySelectorAll('.game-select-btn');
             const gameContainers = document.querySelectorAll('.game-container');
             const backToMenuBtns = document.querySelectorAll('.back-to-menu-btn');
+            const matrixCanvas = document.getElementById('matrix-canvas');
+            const matrixBackBtn = document.getElementById('matrix-back-btn');
 
             function showGameSelection() {
                 if (activeGameLoop) {
@@ -541,6 +569,10 @@
                 }
                 gameSelectionMenu.style.display = 'flex';
                 gameContainers.forEach(c => c.classList.add('hidden'));
+                matrixCanvas.classList.remove('fullscreen');
+                matrixCanvas.style.display = 'block';
+                matrixBackBtn.classList.add('hidden');
+                initMatrixRain(); // Start rain for menu background
             }
 
             function showGame(gameName) {
@@ -549,6 +581,9 @@
                     activeGameLoop = null;
                 }
                 gameSelectionMenu.style.display = 'none';
+                matrixCanvas.style.display = 'none'; // Hide matrix background for games
+                matrixBackBtn.classList.add('hidden');
+
                 gameContainers.forEach(c => {
                     c.classList.toggle('hidden', c.id !== `${gameName}-container`);
                     c.classList.toggle('flex', c.id === `${gameName}-container`);
@@ -559,6 +594,19 @@
                     initConnectFourGame();
                 }
             }
+            
+            function showMatrixMode() {
+                if (activeGameLoop) { // Ensure previous loop is stopped
+                    cancelAnimationFrame(activeGameLoop);
+                    activeGameLoop = null;
+                }
+                gameSelectionMenu.style.display = 'none';
+                gameContainers.forEach(c => c.classList.add('hidden'));
+                matrixCanvas.style.display = 'block';
+                matrixCanvas.classList.add('fullscreen');
+                matrixBackBtn.classList.remove('hidden');
+                initMatrixRain(); // Start/restart rain
+            }
 
             gameSelectBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -567,6 +615,8 @@
                         showGame('breakout-game');
                     } else if (game === 'connect-four') {
                         showGame('connect-four');
+                    } else if (game === 'matrix-mode') {
+                        showMatrixMode();
                     }
                 });
             });
@@ -574,6 +624,75 @@
             backToMenuBtns.forEach(btn => {
                 btn.addEventListener('click', showGameSelection);
             });
+            matrixBackBtn.addEventListener('click', showGameSelection);
+
+            // --- MATRIX RAIN INITIALIZATION ---
+            function initMatrixRain() {
+                const canvas = document.getElementById('matrix-canvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                
+                // The phrase to be spelled out, with spaces.
+                const phrase = "BRETT  IS  GAY  ";
+
+                const resizeCanvas = () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                };
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+                
+                const fontSize = 16;
+                const columns = Math.floor(canvas.width / fontSize);
+
+                // Each element in rainDrops is now an object tracking its y position and its character index in the phrase.
+                const rainDrops = [];
+                for(let i = 0; i < columns; i++) {
+                    rainDrops[i] = {
+                        y: Math.random() * canvas.height, // Start at a random height
+                        charIndex: Math.floor(Math.random() * phrase.length) // Start at a random character
+                    };
+                }
+
+                function drawMatrix() {
+                    // Semi-transparent black background for the fading trail effect
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = '#0F0'; // Classic green color
+                    ctx.font = fontSize + 'px monospace';
+
+                    for(let i = 0; i < rainDrops.length; i++) {
+                        // Get the correct character from the phrase based on the stream's current index
+                        const text = phrase.charAt(rainDrops[i].charIndex);
+                        
+                        // Only draw the character if it's not a space
+                        if (text !== ' ') {
+                            ctx.fillText(text, i * fontSize, rainDrops[i].y * fontSize);
+                        }
+                        
+                        // If the stream has gone off-screen, reset it to the top with a new random character index
+                        if(rainDrops[i].y * fontSize > canvas.height && Math.random() > 0.975){
+                            rainDrops[i].y = 0;
+                            rainDrops[i].charIndex = Math.floor(Math.random() * phrase.length);
+                        }
+
+                        // Move the stream down for the next frame
+                        rainDrops[i].y++;
+                        
+                        // Move to the next character in the phrase, looping back to the start if necessary
+                        rainDrops[i].charIndex = (rainDrops[i].charIndex + 1) % phrase.length;
+                    }
+                }
+
+                function animateMatrix() {
+                    drawMatrix();
+                    activeGameLoop = requestAnimationFrame(animateMatrix);
+                }
+                
+                if (activeGameLoop) cancelAnimationFrame(activeGameLoop);
+                animateMatrix();
+            }
 
             // --- BREAKOUT GAME INITIALIZATION ---
             function initBreakoutGame() {
