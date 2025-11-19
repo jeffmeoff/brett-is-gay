@@ -85,16 +85,8 @@
             }
         }
 
-
-        /* Golf Caddie Page Styles */
-        #golf-page {
-            background-color: #111827; /* bg-gray-900 */
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
         .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .scorecard-table { border-collapse: separate; border-spacing: 0.25rem 0; }
         .modal { display: none; }
         .modal.active { display: flex; }
         .modal { z-index: 50; }
@@ -198,13 +190,6 @@
     </div>
 </div>
 
-        <!-- Golf Caddie Page -->
-        <div id="golf-page" class="page">
-             <div id="golf-app-container" class="w-full max-w-md mx-auto p-4 pt-8 pb-12">
-                 <!-- All Golf App content will be rendered here -->
-             </div>
-        </div>
-
         <!-- Games Page -->
         <div id="games-page" class="page">
             <canvas id="matrix-canvas"></canvas>
@@ -260,42 +245,7 @@
         </div>
     </div>
 
-    <!-- Modals -->
-    <div id="save-modal" class="modal fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-gray-800 border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-fadeIn">
-            <h2 class="text-2xl font-bold text-center mb-4">Save Round</h2>
-            <p class="text-center text-gray-400 mb-4">Enter a name for this round.</p>
-            <input type="text" id="course-name-input" class="w-full text-center bg-gray-700 border border-gray-600 rounded-lg p-3 mb-4" placeholder="Course Name">
-            <div class="grid grid-cols-2 gap-3">
-                <button id="cancel-save" class="w-full bg-gray-600 text-white font-bold py-3 rounded-lg">Cancel</button>
-                <button id="confirm-save" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">Save</button>
-            </div>
-        </div>
-    </div>
-    <div id="add-club-modal" class="modal fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-gray-800 border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-fadeIn">
-            <h2 class="text-2xl font-bold text-center mb-4">Add New Club</h2>
-            <input type="text" id="new-club-name" class="w-full text-center bg-gray-700 border border-gray-600 rounded-lg p-3 mb-2" placeholder="Club Name">
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <input type="number" id="new-club-min" class="w-full text-center bg-gray-700 border border-gray-600 rounded-lg p-3" placeholder="Min Yards">
-                <input type="number" id="new-club-max" class="w-full text-center bg-gray-700 border border-gray-600 rounded-lg p-3" placeholder="Max Yards">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <button id="cancel-add-club" class="w-full bg-gray-600 text-white font-bold py-3 rounded-lg">Cancel</button>
-                <button id="confirm-add-club" class="w-full bg-green-500 text-gray-900 font-bold py-3 rounded-lg">Add Club</button>
-            </div>
-        </div>
-    </div>
-    <div id="delete-round-modal" class="modal fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-4">
-        <div class="bg-gray-800 border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-fadeIn">
-            <h2 class="text-2xl font-bold text-center mb-4">Delete Round?</h2>
-            <p id="delete-round-text" class="text-center text-gray-400 mb-4">This action cannot be undone.</p>
-            <div class="grid grid-cols-2 gap-3">
-                <button id="cancel-delete-round" class="w-full bg-gray-600 text-white font-bold py-3 rounded-lg">Cancel</button>
-                <button id="confirm-delete-round" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg">Delete</button>
-            </div>
-        </div>
-    </div>
+    <!-- Modals (Game Specific) -->
     <div id="winnerModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center transform transition-all scale-95 opacity-0">
             <h2 id="winnerText" class="text-3xl font-bold mb-4"></h2>
@@ -309,10 +259,7 @@
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
             Feed
         </button>
-        <button data-page="golf-page" class="nav-button flex-1 flex flex-col items-center justify-center text-sm text-gray-500">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-            Golf
-        </button>
+        <!-- Golf Button Removed -->
         <button data-page="games-page" class="nav-button flex-1 flex flex-col items-center justify-center text-sm text-gray-500">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V5a1 1 0 00-1.447-.894l-4 2A1 1 0 0011 7v10zM4 17a1 1 0 001.447.894l4-2A1 1 0 0010 15V5a1 1 0 00-1.447-.894l-4 2A1 1 0 004 7v10z"></path></svg>
             Games
@@ -334,13 +281,13 @@
                 transitionScreen.addEventListener('transitionend', () => {
                     transitionScreen.style.display = 'none';
                 }, { once: true });
-            }, 1500); // Shortened initial load to 1.5 seconds
+            }, 1500); 
 
             // --- MASTER PAGE NAVIGATION ---
             function showPage(pageId) {
                 const currentPage = document.querySelector('.page.active');
                 if (currentPage && currentPage.id === pageId) {
-                    return; // Don't do anything if clicking the current page's button
+                    return; 
                 }
 
                 // Stop any running game loops
@@ -351,10 +298,15 @@
 
                 // Hide all pages
                 pages.forEach(page => page.classList.remove('active'));
+                
                 // Show the target page
                 const targetPage = document.getElementById(pageId);
                 if (targetPage) {
                     targetPage.classList.add('active');
+                } else {
+                    // Fallback if page ID doesn't exist (e.g., old local storage data)
+                    document.getElementById('feed-page').classList.add('active');
+                    pageId = 'feed-page';
                 }
 
                 // Update nav buttons
@@ -383,7 +335,6 @@
             function initFeedApp() {
                 const feedContainer = document.getElementById('feed-container');
                 
-                // All photo data is now stored here. No database needed.
                 const photoData = [
                     { imageUrl: 'images/Brett kissin a gay dude.jpg', caption: 'Mega Gay!' },
                     { imageUrl: 'images/brett carson 1.jpg', caption: 'Brett, Gay. Carson, avoiding Gay stuff' },
@@ -419,183 +370,8 @@
                 renderFeed();
             }
 
-            // --- GOLF CADDIE APP INITIALIZATION ---
-            function initGolfApp() {
-                const golfAppContainer = document.getElementById('golf-app-container');
-                if (!golfAppContainer) return;
-
-                let state = { clubs: [], scorecard: {}, history: [], confidence: 0, roundToDeleteIndex: null };
-                const defaultClubs = [ { name: 'Driver', min: 200, max: 220, order: 1 }, { name: '4H', min: 185, max: 200, order: 2 }, { name: '6 Iron', min: 145, max: 160, order: 3 }, { name: '7 Iron', min: 140, max: 155, order: 4 }, { name: '8 Iron', min: 135, max: 150, order: 5 }, { name: '9 Iron', min: 130, max: 145, order: 6 }, { name: 'PW', min: 110, max: 135, order: 7 }, { name: 'A/GW', min: 100, max: 120, order: 8 } ];
-                const createDefaultScorecard = () => ({ scores: Array(18).fill(0), pars: Array(18).fill(4), putts: Array(18).fill(0), roundType: 18 });
-                
-                const vibrate = () => { if ('vibrate' in navigator) navigator.vibrate(10); };
-                
-                const loadData = () => { try { state.clubs = JSON.parse(localStorage.getItem('golfCaddieClubs')) || defaultClubs; state.scorecard = JSON.parse(localStorage.getItem('golfCaddieScorecard')) || createDefaultScorecard(); if (!state.scorecard.putts || state.scorecard.putts.length !== 18) { state.scorecard.putts = Array(18).fill(0); } state.history = JSON.parse(localStorage.getItem('golfCaddieHistory')) || []; } catch (e) { console.error("Error loading data:", e); state.clubs = defaultClubs; state.scorecard = createDefaultScorecard(); state.history = []; } };
-                const saveData = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error(`Error saving ${key}:`, e); } };
-                const saveClubs = () => { state.clubs.sort((a, b) => b.max - a.max); state.clubs.forEach((club, index) => club.order = index + 1); saveData('golfCaddieClubs', state.clubs); };
-                const saveScorecard = () => saveData('golfCaddieScorecard', state.scorecard);
-                const saveHistory = () => saveData('golfCaddieHistory', state.history);
-
-                const showModal = (modalId) => document.getElementById(modalId).classList.add('active');
-                const hideModal = (modalId) => document.getElementById(modalId).classList.remove('active');
-
-                function displayGolfView(html) {
-                    golfAppContainer.innerHTML = html;
-                    const distanceInput = golfAppContainer.querySelector('#distance-input');
-                    if (distanceInput) {
-                        distanceInput.addEventListener('input', findBestClub);
-                    }
-                    const confidenceSlider = golfAppContainer.querySelector('#confidence-slider');
-                    if(confidenceSlider) {
-                        const normalButton = confidenceSlider.querySelector('button[data-value="0"]');
-                        if(normalButton) {
-                            normalButton.classList.add('bg-green-500', 'text-gray-900');
-                            normalButton.classList.remove('text-gray-300', 'hover:bg-gray-600');
-                        }
-                        confidenceSlider.addEventListener('click', (e) => {
-                            const button = e.target.closest('button');
-                            if(button) {
-                                vibrate();
-                                state.confidence = parseInt(button.dataset.value, 10);
-                                confidenceSlider.querySelectorAll('button').forEach(btn => {
-                                    btn.classList.remove('bg-green-500', 'text-gray-900');
-                                    btn.classList.add('text-gray-300', 'hover:bg-gray-600');
-                                });
-                                button.classList.add('bg-green-500', 'text-gray-900');
-                                button.classList.remove('text-gray-300', 'hover:bg-gray-600');
-                                findBestClub();
-                            }
-                        });
-                    }
-                }
-
-                const getScoreColor = (score, par) => {
-                    if (score === 0) return 'text-white';
-                    const diff = score - par;
-                    if (diff <= 0) return 'text-green-400';
-                    if (diff === 1) return 'text-white';
-                    if (diff === 2) return 'text-yellow-400';
-                    return 'text-red-400';
-                };
-
-                const findBestClub = () => {
-                    const distanceInput = document.getElementById('distance-input');
-                    const resultContainer = document.getElementById('result-container');
-                    if (!distanceInput || !resultContainer) return;
-                    const numDistance = parseInt(distanceInput.value, 10);
-                    if (isNaN(numDistance) || numDistance <= 0) {
-                        resultContainer.innerHTML = '<p class="text-gray-500">Enter a yardage to get a suggestion.</p>';
-                        return;
-                    }
-                    const calculateScore = (club) => {
-                        if (state.confidence === 1) return Math.abs(numDistance - club.max);
-                        if (state.confidence === -1) return Math.abs(numDistance - club.min);
-                        return Math.abs(numDistance - (club.min + club.max) / 2);
-                    };
-                    const rankedClubs = state.clubs.map(club => ({ club, score: calculateScore(club) })).sort((a, b) => a.score - b.score);
-                    let suggestions = rankedClubs.slice(0, 2).map(item => item.club);
-                    if (rankedClubs.length > 2 && rankedClubs[2].score <= 15) {
-                        suggestions.push(rankedClubs[2].club);
-                    }
-                    renderResult(`For ${numDistance} yds, your best options are:`, suggestions);
-                };
-
-                const renderResult = (prompt, suggestions) => {
-                    const resultContainer = document.getElementById('result-container');
-                    if (!resultContainer) return;
-                    const rankColors = ['text-green-400', 'text-yellow-400', 'text-red-400'];
-                    let html = `<p class="text-xl text-gray-400 mb-3">${prompt}</p><div class="space-y-4 text-center">`;
-                    suggestions.forEach((club, index) => {
-                        const color = rankColors[index] || 'text-white';
-                        const range = club.name === 'Driver' ? `${club.min}+ yds` : `${club.min}-${club.max} yds`;
-                        html += `<div class="text-5xl font-bold ${color}">${club.name}<span class="block text-3xl font-normal text-white/90 mt-1">(${range})</span></div>`;
-                        if (index < suggestions.length - 1) html += '<p class="text-lg text-gray-500 my-2">or</p>';
-                    });
-                    resultContainer.innerHTML = html + '</div>';
-                };
-
-                const renderCaddie = () => {
-                    const html = `
-                    <div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn">
-                        <div class="flex justify-between items-center mb-6">
-                            <h1 class="text-3xl font-bold text-green-400 flex items-center gap-3">
-                                <svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M216 32h-80a8 8 0 0 0-5.66 2.34L64 99.59V40a8 8 0 0 0-16 0v168a8 8 0 0 0 16 0v-59.59l66.34 65.25A8 8 0 0 0 136 216h80a8 8 0 0 0 8-8V40a8 8 0 0 0-8-8ZM138.34 128l-56-55.15L144.59 48H208v128h-63.41l62.07-60.85Z"></path></svg>
-                                Caddie Pro
-                            </h1>
-                            <div class="flex items-center gap-2">
-                                <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="history">
-                                    <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg>
-                                </button>
-                                <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="scorecard">
-                                    <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216 40H40a16 16 0 0 0-16 16v144a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V56a16 16 0 0 0-16-16Zm0 160H40V56h176v144ZM100 88v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Zm48 0v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Zm48 0v80a8 8 0 0 1-16 0V88a8 8 0 0 1 16 0Z"></path></svg>
-                                </button>
-                                <button class="golf-nav-btn bg-gray-700/50 text-gray-400 hover:text-white transition p-2 rounded-full shadow-lg hover:bg-gray-700" data-page="settings">
-                                <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M234.2,141.13,223.86,128l10.34-13.13a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34,13.12-10.34a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34L223.86,28,201.73,24.87l-10.34-13.12a15.86,15.86,0,0,0-22.13-3.13L156,21.73,142.87,11.39a15.86,15.86,0,0,0-22.13,3.13L107.62,24.87,94.5,11.39a15.86,15.86,0,0,0-22.13,3.13L59.25,24.87,48.91,11.39A15.86,15.86,0,0,0,26.78,14.52L16.44,24.87,3.32,38.25a15.86,15.86,0,0,0,3.13,22.13L16.79,70.72,3.67,81.06a15.86,15.86,0,0,0,3.13,22.13L16.44,113.53,3.32,126.87a15.86,15.86,0,0,0,3.13,22.13L21.73,159.34,11.39,172.47a15.86,15.86,0,0,0,3.13,22.13L24.87,204.94,11.39,218.06a15.86,15.86,0,0,0,3.13,22.13L24.87,250.53,38.25,253.66a15.86,15.86,0,0,0,22.13-3.13L70.72,237.09,81.06,250.21a15.86,15.86,0,0,0,22.13-3.13L113.53,236.75l10.34,13.12a15.86,15.86,0,0,0,22.13,3.13L159.34,242.91l13.12,10.34a15.86,15.86,0,0,0,22.13-3.13l10.34-13.12,13.12,10.34a15.86,15.86,0,0,0,22.13-3.13L242.91,232.53l10.34-13.12a15.86,15.86,0,0,0-3.13-22.13l-10.34-13.12,13.12-10.34a15.86,15.86,0,0,0,3.13-22.13ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Z"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="space-y-6">
-                            <input type="number" id="distance-input" placeholder="Enter distance in yds" class="w-full text-center bg-gray-700 border border-gray-600 text-white text-lg rounded-lg p-4 focus:ring-2 focus:ring-green-500 focus:outline-none" />
-                            <div>
-                                <label class="block text-sm font-medium text-gray-400 mb-2 text-center">Shot Confidence</label>
-                                <div id="confidence-slider" class="flex justify-between items-center bg-gray-700 rounded-lg p-1">
-                                    <button data-value="-1" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Smooth</button>
-                                    <button data-value="0" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Normal</button>
-                                    <button data-value="1" class="w-1/3 py-2 text-sm font-semibold rounded-md transition text-gray-300 hover:bg-gray-600">Aggressive</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="result-container" class="mt-8 min-h-[10rem] flex flex-col items-center justify-center">
-                            <p class="text-gray-500">Enter a yardage to get a suggestion.</p>
-                        </div>
-                    </div>`;
-                    displayGolfView(html);
-                };
-                
-                const renderSettings = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-green-400 flex items-center gap-3"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M234.2,141.13,223.86,128l10.34-13.13a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34,13.12-10.34a15.86,15.86,0,0,0-3.13-22.13l-13.12-10.34L223.86,28,201.73,24.87l-10.34-13.12a15.86,15.86,0,0,0-22.13-3.13L156,21.73,142.87,11.39a15.86,15.86,0,0,0-22.13,3.13L107.62,24.87,94.5,11.39a15.86,15.86,0,0,0-22.13,3.13L59.25,24.87,48.91,11.39A15.86,15.86,0,0,0,26.78,14.52L16.44,24.87,3.32,38.25a15.86,15.86,0,0,0,3.13,22.13L16.79,70.72,3.67,81.06a15.86,15.86,0,0,0,3.13,22.13L16.44,113.53,3.32,126.87a15.86,15.86,0,0,0,3.13,22.13L21.73,159.34,11.39,172.47a15.86,15.86,0,0,0,3.13,22.13L24.87,204.94,11.39,218.06a15.86,15.86,0,0,0,3.13,22.13L24.87,250.53,38.25,253.66a15.86,15.86,0,0,0,22.13-3.13L70.72,237.09,81.06,250.21a15.86,15.86,0,0,0,22.13-3.13L113.53,236.75l10.34,13.12a15.86,15.86,0,0,0,22.13,3.13L159.34,242.91l13.12,10.34a15.86,15.86,0,0,0,22.13-3.13l10.34-13.12,13.12,10.34a15.86,15.86,0,0,0,22.13-3.13L242.91,232.53l10.34-13.12a15.86,15.86,0,0,0-3.13-22.13l-10.34-13.12,13.12-10.34a15.86,15.86,0,0,0,3.13-22.13ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Z"/></svg> My Clubs</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="settings-clubs-container space-y-4 max-h-[60vh] overflow-y-auto pr-2">`; state.clubs.forEach((club, index) => { html += `<div class="p-4 bg-gray-700/50 rounded-lg"><div class="flex justify-between items-center mb-2"><p class="font-bold text-lg text-white">${club.name}</p><button class="delete-club text-red-500 hover:text-red-400" data-index="${index}"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192Zm-80-104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg></button></div><div class="flex items-center gap-4"><input type="number" data-index="${index}" data-field="min" value="${club.min}" class="club-input w-full text-center bg-gray-800 border border-gray-600 rounded-lg p-2" /><span class="text-gray-400">-</span><input type="number" data-index="${index}" data-field="max" value="${club.max}" class="club-input w-full text-center bg-gray-800 border border-gray-600 rounded-lg p-2" /></div></div>`; }); html += `</div><button class="add-new-club mt-4 w-full border-2 border-dashed border-gray-600 hover:border-green-500 hover:text-green-500 text-gray-400 font-bold py-3 rounded-lg transition">Add New Club</button><button class="save-clubs mt-2 w-full bg-green-500 text-gray-900 font-bold py-3 rounded-lg">Save & Close</button></div>`; displayGolfView(html); };
-                const renderScorecard = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-fadeIn"><div class="flex justify-between items-center mb-4"><h1 class="text-3xl font-bold text-green-400">Scorecard</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="round-type-selector flex justify-center items-center bg-gray-700 rounded-lg p-1 mb-4"><button data-type="9" class="w-1/2 py-2 text-sm font-semibold rounded-md transition">9 Holes</button><button data-type="18" class="w-1/2 py-2 text-sm font-semibold rounded-md transition">18 Holes</button></div><div id="scorecard-tables" class="space-y-4"></div><div id="scorecard-summary" class="mt-6 border-t border-gray-700 pt-4 flex justify-around items-center"></div><button class="finish-round mt-6 w-full bg-blue-500 text-white font-bold py-3 rounded-lg">Finish & Save Round</button></div>`; displayGolfView(html); updateScorecardView(); };
-                const updateScorecardView = () => { const tablesContainer = document.getElementById('scorecard-tables'); const roundTypeSelector = document.querySelector('.round-type-selector'); if (!tablesContainer || !roundTypeSelector) return; roundTypeSelector.querySelectorAll('button').forEach(btn => { const isSelected = parseInt(btn.dataset.type) === state.scorecard.roundType; btn.classList.toggle('bg-green-500', isSelected); btn.classList.toggle('text-gray-900', isSelected); }); let tablesHTML = renderScorecardTable('Out', Array.from({length: 9}, (_, i) => i + 1), state.scorecard.scores.slice(0, 9), state.scorecard.pars.slice(0, 9), state.scorecard.putts.slice(0, 9), 0, true); if (state.scorecard.roundType === 18) { tablesHTML += renderScorecardTable('In', Array.from({length: 9}, (_, i) => i + 10), state.scorecard.scores.slice(9, 18), state.scorecard.pars.slice(9, 18), state.scorecard.putts.slice(9, 18), 9, true); } tablesContainer.innerHTML = tablesHTML; updateScorecardTotals(); };
-                const renderScorecardTable = (title, holes, scores, pars, putts, startIndex, editable = false) => { let tableHTML = `<div class="w-full overflow-x-auto"><table class="w-full min-w-max text-center text-sm scorecard-table"><thead><tr class="text-gray-400"><th class="p-2 font-semibold">${title}</th>${holes.map(h => `<th class="p-2 font-semibold">${h}</th>`).join('')}<th class="p-2 font-semibold">Total</th></tr></thead><tbody class="bg-gray-700/50 rounded-lg"><tr><td class="p-2 text-gray-300">Par</td>${pars.map((p, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="par" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="par-value font-bold text-xl w-6">${p}</span><button data-type="par" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6">${p}</span>`}</td>`).join('')}<td class="par-total font-bold text-xl p-2">${pars.reduce((a,b)=>a+b,0)}</td></tr><tr><td class="p-2 text-gray-300">Score</td>${scores.map((s, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="score" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-red-500/80 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="score-value font-bold text-xl w-6 ${getScoreColor(s, pars[i])}">${s || '-'}</span><button data-type="score" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-green-500/80 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6 ${getScoreColor(s, pars[i])}">${s || '-'}</span>`}</td>`).join('')}<td class="score-total font-bold text-xl p-2">${scores.reduce((a,b)=>a+b,0)}</td></tr><tr><td class="p-2 text-gray-300">Putts</td>${putts.map((p, i) => `<td class="p-2">${editable ? `<div class="flex items-center justify-center gap-2"><button data-type="putt" data-index="${startIndex+i}" data-delta="-1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">-</button><span class="putt-value font-bold text-xl w-6">${p || '-'}</span><button data-type="putt" data-index="${startIndex+i}" data-delta="1" class="score-btn bg-gray-600 w-8 h-8 rounded-full font-bold text-lg flex items-center justify-center">+</button></div>` : `<span class="font-bold text-xl w-6">${p || '-'}</span>`}</td>`).join('')}<td class="putt-total font-bold text-xl p-2">${putts.reduce((a,b)=>a+b,0)}</td></tr></tbody></table></div>`; return tableHTML; };
-                const updateScorecardTotals = () => { const summaryContainer = document.getElementById('scorecard-summary'); if (!summaryContainer) return; const numHoles = state.scorecard.roundType; const scores = state.scorecard.scores.slice(0, numHoles); const pars = state.scorecard.pars.slice(0, numHoles); const putts = state.scorecard.putts.slice(0, numHoles); const totalScore = scores.reduce((a, b) => a + b, 0); const totalPar = pars.reduce((a, b) => a + b, 0); const totalPutts = putts.reduce((a, b) => a + b, 0); const toPar = totalScore - totalPar; const toParStr = toPar > 0 ? `+${toPar}` : toPar === 0 ? 'E' : toPar; const toParColor = toPar <= 0 ? 'text-green-400' : 'text-yellow-400'; summaryContainer.innerHTML = `<div class="text-center"><p class="text-gray-400">Putts</p><p class="text-4xl font-bold">${totalPutts}</p></div><div class="text-center"><p class="text-gray-400">Total</p><p class="text-4xl font-bold">${totalScore}</p></div><div class="text-center"><p class="text-gray-400">To Par</p><p class="text-4xl font-bold ${toParColor}">${toParStr}</p></div>`; };
-                const renderHistory = () => { let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 animate-fadeIn"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-green-400">Round History</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="caddie"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><div class="space-y-3 max-h-[70vh] overflow-y-auto pr-2">`; if (state.history.length === 0) { html += `<div class="text-center text-gray-400 p-8"><p class="text-lg">No saved rounds yet.</p><p class="text-sm">Finish a round on the Scorecard page to see it here.</p></div>`; } else { state.history.forEach((round, index) => { const date = new Date(round.date).toLocaleDateString(); const toPar = round.toPar > 0 ? `+${round.toPar}` : round.toPar === 0 ? 'E' : round.toPar; html += `<div class="bg-gray-700/50 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition"><div class="history-item flex-grow cursor-pointer" data-index="${index}"><p class="font-bold text-lg">${round.courseName}</p><p class="text-sm text-gray-400">${date} <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-xs">${round.scorecard.roundType} Holes</span></p></div><div class="flex items-center gap-4"><div class="text-right history-item cursor-pointer" data-index="${index}"><p class="font-bold text-2xl">${round.totalScore}</p><p class="text-sm text-gray-400">(${toPar})</p></div><button class="delete-round text-red-500 hover:text-red-400 p-2 rounded-full hover:bg-gray-600" data-index="${index}"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192Zm-80-104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg></button></div></div>`; }); } html += `</div></div>`; displayGolfView(html); };
-                const renderRoundDetail = (round) => { const toParStr = round.toPar > 0 ? `+${round.toPar}` : round.toPar === 0 ? 'E' : round.toPar; const toParColor = round.toPar <= 0 ? 'text-green-400' : 'text-yellow-400'; let tablesHTML = renderScorecardTable('Out', Array.from({length: 9}, (_, i) => i + 1), round.scorecard.scores.slice(0, 9), round.scorecard.pars.slice(0, 9), round.scorecard.putts.slice(0, 9), 0, false); if (round.scorecard.roundType === 18) { tablesHTML += renderScorecardTable('In', Array.from({length: 9}, (_, i) => i + 10), round.scorecard.scores.slice(9, 18), round.scorecard.pars.slice(9, 18), round.scorecard.putts.slice(9, 18), 9, false); } let html = `<div class="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-fadeIn"><div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold text-green-400">${round.courseName}</h1><button class="golf-nav-btn text-gray-400 p-2 rounded-full hover:bg-gray-700" data-page="history"><svg class="w-8 h-8" viewBox="0 0 256 256" fill="currentColor"><path d="M204.83,115.17l-40-40a8,8,0,0,0-11.32,11.32L176.69,104H48a8,8,0,0,0,0,16h128.69l-23.18,23.17a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,204.83,115.17Z" transform="rotate(180 128 128)"></path></svg></button></div><p class="text-center text-gray-400 mb-4">${new Date(round.date).toLocaleDateString()}</p><div class="space-y-4">${tablesHTML}</div><div class="mt-6 border-t border-gray-700 pt-4 flex justify-around items-center"><div class="text-center"><p class="text-gray-400">Putts</p><p class="text-4xl font-bold">${round.totalPutts}</p></div><div class="text-center"><p class="text-gray-400">Total</p><p class="text-4xl font-bold">${round.totalScore}</p></div><div class="text-center"><p class="text-gray-400">To Par</p><p class="text-4xl font-bold ${toParColor}">${toParStr}</p></div></div></div>`; displayGolfView(html); };
-                
-                golfAppContainer.addEventListener('click', (e) => {
-                    const historyItem = e.target.closest('.history-item');
-                    if (historyItem) {
-                        vibrate();
-                        renderRoundDetail(state.history[historyItem.dataset.index]);
-                        return;
-                    }
-
-                    const button = e.target.closest('button');
-                    if (button) {
-                        vibrate();
-                        if (button.matches('.golf-nav-btn')) { const page = button.dataset.page; if (page === 'caddie') renderCaddie(); if (page === 'settings') renderSettings(); if (page === 'scorecard') renderScorecard(); if (page === 'history') renderHistory(); return; }
-                        if (button.matches('.score-btn')) { const { type, index, delta } = button.dataset; const i = parseInt(index, 10); const fieldMap = { par: 'pars', score: 'scores', putt: 'putts' }; const valueMap = { par: 'par-value', score: 'score-value', putt: 'putt-value' }; const totalMap = { par: 'par-total', score: 'score-total', putt: 'putt-total' }; const targetArray = state.scorecard[fieldMap[type]]; const newValue = Math.max(0, (targetArray[i] || 0) + parseInt(delta)); targetArray[i] = newValue; saveScorecard(); const valueSpan = button.parentElement.querySelector(`.${valueMap[type]}`); if (valueSpan) { valueSpan.textContent = newValue || '-'; if (type === 'score') { valueSpan.className = `score-value font-bold text-xl w-6 ${getScoreColor(newValue, state.scorecard.pars[i])}`; } } const table = button.closest('table'); if (table) { const isOutTable = i < 9; const startIndex = isOutTable ? 0 : 9; const endIndex = isOutTable ? 9 : 18; const rowTotal = state.scorecard[fieldMap[type]].slice(startIndex, endIndex).reduce((a, b) => a + b, 0); const totalTd = table.querySelector(`.${totalMap[type]}`); if (totalTd) { totalTd.textContent = rowTotal; } } updateScorecardTotals(); return; }
-                        if (button.matches('.save-clubs')) { const container = golfAppContainer.querySelector('.settings-clubs-container'); container.querySelectorAll('.club-input').forEach(input => { const index = parseInt(input.dataset.index, 10); const field = input.dataset.field; const value = parseInt(input.value, 10); if(state.clubs[index] && !isNaN(value)) { state.clubs[index][field] = value; } }); saveClubs(); button.textContent = 'Saved!'; setTimeout(() => renderCaddie(), 1000); }
-                        if (button.matches('.add-new-club')) { showModal('add-club-modal'); }
-                        if (button.matches('.delete-club')) { state.clubs.splice(parseInt(button.dataset.index, 10), 1); saveClubs(); renderSettings(); }
-                        if (button.closest('.round-type-selector')) { state.scorecard.roundType = parseInt(button.dataset.type, 10); saveScorecard(); updateScorecardView(); }
-                        if (button.matches('.finish-round')) { document.getElementById('course-name-input').value = `Round - ${new Date().toLocaleDateString()}`; showModal('save-modal'); }
-                        if (button.matches('.delete-round')) { state.roundToDeleteIndex = parseInt(button.dataset.index, 10); const round = state.history[state.roundToDeleteIndex]; document.getElementById('delete-round-text').textContent = `Are you sure you want to delete the round at ${round.courseName}?`; showModal('delete-round-modal'); }
-                    }
-                });
-
-                document.getElementById('cancel-save').addEventListener('click', () => hideModal('save-modal'));
-                document.getElementById('confirm-save').addEventListener('click', () => { const courseName = document.getElementById('course-name-input').value.trim(); if (courseName) { const roundToSave = JSON.parse(JSON.stringify(state.scorecard)); const numHoles = roundToSave.roundType; const totalScore = roundToSave.scores.slice(0, numHoles).reduce((a, b) => a + b, 0); const totalPar = roundToSave.pars.slice(0, numHoles).reduce((a, b) => a + b, 0); const totalPutts = roundToSave.putts.slice(0, numHoles).reduce((a, b) => a + b, 0); state.history.unshift({ courseName, date: new Date().toISOString(), totalScore, toPar: totalScore - totalPar, totalPutts, scorecard: roundToSave }); saveHistory(); state.scorecard = createDefaultScorecard(); saveScorecard(); hideModal('save-modal'); renderHistory(); } });
-                document.getElementById('cancel-delete-round').addEventListener('click', () => hideModal('delete-round-modal'));
-                document.getElementById('confirm-delete-round').addEventListener('click', () => { if (state.roundToDeleteIndex !== null) { state.history.splice(state.roundToDeleteIndex, 1); saveHistory(); renderHistory(); state.roundToDeleteIndex = null; } hideModal('delete-round-modal'); });
-                document.getElementById('cancel-add-club').addEventListener('click', () => hideModal('add-club-modal'));
-                document.getElementById('confirm-add-club').addEventListener('click', () => { const name = document.getElementById('new-club-name').value.trim(); const min = parseInt(document.getElementById('new-club-min').value, 10); const max = parseInt(document.getElementById('new-club-max').value, 10); if (name && !isNaN(min) && !isNaN(max) && max >= min) { state.clubs.push({ name, min, max, order: state.clubs.length + 1 }); saveClubs(); document.getElementById('new-club-name').value = ''; document.getElementById('new-club-min').value = ''; document.getElementById('new-club-max').value = ''; hideModal('add-club-modal'); renderSettings(); } else { 
-                    // Using a custom modal for alerts would be better, but for simplicity:
-                    // alert('Please enter a valid name and range (max >= min).'); 
-                    console.error('Please enter a valid name and range (max >= min).');
-                } });
-
-                loadData();
-                renderCaddie();
-            }
+            // --- GOLF APP DELETED ---
+            // The Golf App logic and UI has been removed as requested.
 
             // --- GAMES APP LOGIC ---
             const gameSelectionMenu = document.getElementById('game-selection-menu');
@@ -1175,16 +951,13 @@
 
             // --- INITIALIZE ALL APPS ---
             initFeedApp();
-            initGolfApp();
+            // Golf init removed
             
             // Start on the last visited page or feed page by default
-            const lastPage = localStorage.getItem('lastActivePage') || 'feed-page';
+            // Logic inside showPage handles fallback if lastActivePage was 'golf-page'
+            let lastPage = localStorage.getItem('lastActivePage') || 'feed-page';
             showPage(lastPage);
         });
     </script>
 </body>
 </html>
-
-
-
-
