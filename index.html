@@ -166,22 +166,6 @@
 
     <!-- Transition Screen -->
     <div id="transition-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
-        <!-- New Intro Text -->
-        <p class="text-white mb-6 text-xl md:text-3xl text-center animate-pulse" style="font-family: 'Press Start 2P', cursive; color: #FFFF00; text-shadow: 2px 2px #FF00FF;">THIS IS BRETT</p>
-        
-        <!-- Photo Container -->
-        <div class="mb-8 relative border-4 border-white rounded-lg overflow-hidden w-64 h-64 shadow-[0_0_20px_#00FF00]">
-            <!-- 
-                INSTRUCTIONS: 
-                To change the photo, name your image 'intro_brett.jpg' and put it in your images folder,
-                OR change the src below to your specific filename.
-            -->
-            <img src="images/intro_brett.jpg" 
-                 alt="Brett" 
-                 class="w-full h-full object-cover"
-                 onerror="this.onerror=null; this.src='https://placehold.co/400x400/222/FFF?text=BRETT+PHOTO+HERE';">
-        </div>
-
         <!-- Site Title -->
         <h1 id="transition-text" class="font-bold text-green-500 text-center px-4 break-words" style="font-family: 'Press Start 2P', cursive; font-size: clamp(1rem, 5vw, 2rem);">BrettIsGay.com</h1>
     </div>
@@ -361,6 +345,7 @@
                 const feedContainer = document.getElementById('feed-container');
                 
                 const photoData = [
+                    { imageUrl: 'images/intro_brett.jpg', caption: 'This is Brett' },
                     { imageUrl: 'images/Brett kissin a gay dude.jpg', caption: 'Mega Gay!' },
                     { imageUrl: 'images/brett carson 1.jpg', caption: 'Brett, Gay. Carson, avoiding Gay stuff' },
                     { imageUrl: 'images/brett carson 2.jpg', caption: 'Super Gay!' },
@@ -983,4 +968,3 @@
     </script>
 </body>
 </html>
-
