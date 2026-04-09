@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>brettisgay.com</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
@@ -16,8 +16,8 @@
         /* General Styles */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* A neutral background for the whole app */
-            overflow: hidden; /* Prevent scrolling on the body */
+            background-color: #f0f2f5; 
+            overflow: hidden; 
             touch-action: none;
         }
         #app-container {
@@ -25,24 +25,23 @@
             top: 0;
             left: 0;
             right: 0;
-            bottom: 4rem; /* Height of the nav bar */
+            bottom: 4rem; 
             overflow: hidden;
         }
         .page {
-            display: none; /* Hide pages by default */
+            display: none; 
             width: 100%;
             height: 100%;
             overflow-y: auto;
         }
         .page.active {
-            display: block; /* Show active page */
+            display: block; 
         }
 
         /* Transition Screen */
         #transition-screen {
             transition: opacity 1s ease-in-out;
         }
-
 
         /* Feed Page Styles */
         #feed-page {
@@ -52,7 +51,7 @@
         .post-card {
             background-color: white;
             padding: 1rem;
-            padding-bottom: 3.5rem; /* Space for caption */
+            padding-bottom: 3.5rem; 
             border-radius: 0.25rem;
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             position: relative;
@@ -119,6 +118,43 @@
             z-index: 20;
         }
 
+        /* F1 Reaction Timer Styles */
+        #f1-reaction-container {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; 
+            overscroll-behavior: none; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .light-box {
+            background-color: #1f2937;
+            border: 2px solid #374151;
+        }
+        .light {
+            width: 60px;
+            height: 60px;
+            background-color: #4b1113; 
+            border-radius: 50%;
+            transition: background-color 0.05s, box-shadow 0.05s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .light.on {
+            background-color: #ff0000; 
+            box-shadow: 0 0 30px #ff0000, inset 0 0 10px rgba(255,255,255,0.5);
+        }
+        @media (max-width: 600px) {
+            .light {
+                width: 12vw; 
+                height: 12vw;
+                max-width: 50px;
+                max-height: 50px;
+            }
+            .light-box {
+                padding: 0.25rem;
+                gap: 0.25rem;
+            }
+        }
+
         /* Breakout Game Styles */
         #breakout-game-container {
             font-family: 'Press Start 2P', cursive;
@@ -164,16 +200,12 @@
 </head>
 <body>
 
-    <!-- Transition Screen -->
     <div id="transition-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
-        <!-- Site Title -->
         <h1 id="transition-text" class="font-bold text-green-500 text-center px-4 break-words" style="font-family: 'Press Start 2P', cursive; font-size: clamp(1rem, 5vw, 2rem);">brettisgay.com</h1>
     </div>
 
-    <!-- Page Container -->
     <div id="app-container">
         
-        <!-- Brett's Feed Page -->
         <div id="feed-page" class="page">
             <header class="bg-white border-b border-gray-300 sticky top-0 z-10" style="background-color: #f5f3ef; background-image: url('https://www.transparenttextures.com/patterns/light-paper-fibers.png');">
                 <div class="max-w-4xl mx-auto py-3 px-4 text-center">
@@ -181,7 +213,6 @@
                 </div>
             </header>
 
-            <!-- Info Section -->
             <div class="max-w-4xl mx-auto px-4 pt-6 text-center">
                 <p class="text-xl md:text-2xl text-gray-800" style="font-family: 'Gochi Hand', cursive;">
                     Welcome to brettisgay.com
@@ -198,22 +229,45 @@
             </div>
         </div>
 
-        <!-- Games Page -->
         <div id="games-page" class="page">
             <canvas id="matrix-canvas"></canvas>
             <button id="matrix-back-btn" class="absolute top-4 left-4 z-30 text-white bg-black bg-opacity-50 p-2 rounded-full hidden back-to-menu-btn">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </button>
 
-            <!-- Game Selection Menu -->
-            <div id="game-selection-menu" class="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
-                 <h1 class="text-5xl font-bold text-white" style="font-family: 'Press Start 2P', cursive;">SELECT GAME</h1>
-                 <button data-game="breakout" class="game-select-btn text-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Breakout Deluxe</button>
-                 <button data-game="connect-four" class="game-select-btn text-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Connect Four</button>
-                 <button data-game="matrix-mode" class="game-select-btn text-2xl bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Matrix Mode</button>
+            <div id="game-selection-menu" class="w-full h-full flex flex-col items-center justify-center space-y-6 p-4">
+                 <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 text-center" style="font-family: 'Press Start 2P', cursive;">SELECT GAME</h1>
+                 <button data-game="f1-reaction" class="game-select-btn w-[280px] text-xl bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">F1 Reaction</button>
+                 <button data-game="breakout" class="game-select-btn w-[280px] text-xl bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Breakout Deluxe</button>
+                 <button data-game="connect-four" class="game-select-btn w-[280px] text-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Connect Four</button>
+                 <button data-game="matrix-mode" class="game-select-btn w-[280px] text-xl bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Matrix Mode</button>
             </div>
 
-            <!-- Breakout Game Container -->
+            <div id="f1-reaction-container" class="game-container hidden w-full h-full bg-[#111827] flex-col items-center justify-between py-10 md:py-16 text-white relative">
+                <button class="absolute top-4 left-4 z-50 text-white bg-black bg-opacity-50 p-2 rounded-full back-to-menu-btn">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                
+                <div class="text-center pointer-events-none px-4 flex-shrink-0 mt-8">
+                    <h1 class="text-3xl md:text-5xl font-black uppercase tracking-wider text-gray-200 italic">Reaction Test</h1>
+                    <p class="text-gray-400 mt-2">Wait for the lights to go out...</p>
+                </div>
+
+                <div class="flex gap-1.5 md:gap-4 p-3 md:p-4 bg-gray-900 rounded-xl shadow-2xl border border-gray-700 pointer-events-none my-auto" id="light-rig">
+                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-1-a"></div><div class="light" id="light-1-b"></div></div>
+                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-2-a"></div><div class="light" id="light-2-b"></div></div>
+                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-3-a"></div><div class="light" id="light-3-b"></div></div>
+                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-4-a"></div><div class="light" id="light-4-b"></div></div>
+                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-5-a"></div><div class="light" id="light-5-b"></div></div>
+                </div>
+
+                <div class="flex flex-col items-center pointer-events-none w-full px-4 text-center flex-shrink-0 min-h-[160px] mb-8">
+                    <h2 id="f1-status-text" class="text-2xl md:text-4xl font-bold mb-2 animate-pulse">Tap anywhere to start</h2>
+                    <p id="f1-time-display" class="text-5xl md:text-7xl font-black text-red-500 hidden font-mono">0.000s</p>
+                    <p id="f1-comparison-text" class="text-lg md:text-2xl text-gray-300 mt-2 h-16 max-w-2xl px-2"></p>
+                </div>
+            </div>
+
             <div id="breakout-game-container" class="game-container hidden w-full h-full">
                  <button class="absolute top-2 left-2 z-50 text-white bg-black bg-opacity-50 p-2 rounded-full back-to-menu-btn">
                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -235,7 +289,6 @@
                  </div>
             </div>
 
-            <!-- Connect Four Game Container -->
             <div id="connect-four-container" class="game-container hidden w-full h-full">
                  <button class="absolute top-2 left-2 z-50 text-black bg-white bg-opacity-50 p-2 rounded-full back-to-menu-btn">
                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -253,7 +306,6 @@
         </div>
     </div>
 
-    <!-- Modals (Game Specific) -->
     <div id="winnerModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center transform transition-all scale-95 opacity-0">
             <h2 id="winnerText" class="text-3xl font-bold mb-4"></h2>
@@ -261,13 +313,11 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation Menu -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around h-16 z-20">
         <button data-page="feed-page" class="nav-button flex-1 flex flex-col items-center justify-center text-sm text-blue-500">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
             Feed
         </button>
-        <!-- Golf Button Removed -->
         <button data-page="games-page" class="nav-button flex-1 flex flex-col items-center justify-center text-sm text-gray-500">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V5a1 1 0 00-1.447-.894l-4 2A1 1 0 0011 7v10zM4 17a1 1 0 001.447.894l4-2A1 1 0 0010 15V5a1 1 0 00-1.447-.894l-4 2A1 1 0 004 7v10z"></path></svg>
             Games
@@ -284,7 +334,6 @@
             let activeGameLoop = null;
 
             // --- INITIAL LOAD TRANSITION ---
-            // Increased to 3000ms (3 seconds) so people can read "This is Brett" and see the photo
             setTimeout(() => {
                 transitionScreen.style.opacity = '0';
                 transitionScreen.addEventListener('transitionend', () => {
@@ -299,36 +348,29 @@
                     return; 
                 }
 
-                // Stop any running game loops
                 if (activeGameLoop) {
                     cancelAnimationFrame(activeGameLoop);
                     activeGameLoop = null;
                 }
 
-                // Hide all pages
                 pages.forEach(page => page.classList.remove('active'));
                 
-                // Show the target page
                 const targetPage = document.getElementById(pageId);
                 if (targetPage) {
                     targetPage.classList.add('active');
                 } else {
-                    // Fallback if page ID doesn't exist (e.g., old local storage data)
                     document.getElementById('feed-page').classList.add('active');
                     pageId = 'feed-page';
                 }
 
-                // Update nav buttons
                 navButtons.forEach(button => {
                     const isSelected = button.dataset.page === pageId;
                     button.classList.toggle('text-blue-500', isSelected);
                     button.classList.toggle('text-gray-500', !isSelected);
                 });
 
-                // Save the last page to local storage
                 localStorage.setItem('lastActivePage', pageId);
 
-                // Handle game page specific logic
                 if (pageId === 'games-page') {
                     showGameSelection();
                 }
@@ -366,8 +408,7 @@
                     const article = document.createElement('article');
                     article.className = 'post-card';
                     
-                    // Apply a random rotation for the scrapbook effect
-                    const rotation = Math.random() * 8 - 4; // between -4 and 4 degrees
+                    const rotation = Math.random() * 8 - 4; 
                     article.style.transform = `rotate(${rotation}deg)`;
 
                     const image = `<img src="${post.imageUrl}" alt="${post.caption}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/ccc/ffffff?text=Image+Not+Found';">`;
@@ -379,9 +420,6 @@
                 
                 renderFeed();
             }
-
-            // --- GOLF APP DELETED ---
-            // The Golf App logic and UI has been removed as requested.
 
             // --- GAMES APP LOGIC ---
             const gameSelectionMenu = document.getElementById('game-selection-menu');
@@ -396,12 +434,15 @@
                     cancelAnimationFrame(activeGameLoop);
                     activeGameLoop = null;
                 }
+                // Stop F1 timer if they back out early
+                if (window.resetF1Game) window.resetF1Game();
+
                 gameSelectionMenu.style.display = 'flex';
                 gameContainers.forEach(c => c.classList.add('hidden'));
                 matrixCanvas.classList.remove('fullscreen');
                 matrixCanvas.style.display = 'block';
                 matrixBackBtn.classList.add('hidden');
-                initMatrixRain(); // Start rain for menu background
+                initMatrixRain(); 
             }
 
             function showGame(gameName) {
@@ -410,22 +451,25 @@
                     activeGameLoop = null;
                 }
                 gameSelectionMenu.style.display = 'none';
-                matrixCanvas.style.display = 'none'; // Hide matrix background for games
+                matrixCanvas.style.display = 'none'; 
                 matrixBackBtn.classList.add('hidden');
 
                 gameContainers.forEach(c => {
                     c.classList.toggle('hidden', c.id !== `${gameName}-container`);
                     c.classList.toggle('flex', c.id === `${gameName}-container`);
                 });
+                
                 if (gameName === 'breakout-game') {
                     initBreakoutGame();
                 } else if (gameName === 'connect-four') {
                     initConnectFourGame();
+                } else if (gameName === 'f1-reaction') {
+                    initF1ReactionGame();
                 }
             }
             
             function showMatrixMode() {
-                if (activeGameLoop) { // Ensure previous loop is stopped
+                if (activeGameLoop) { 
                     cancelAnimationFrame(activeGameLoop);
                     activeGameLoop = null;
                 }
@@ -434,13 +478,15 @@
                 matrixCanvas.style.display = 'block';
                 matrixCanvas.classList.add('fullscreen');
                 matrixBackBtn.classList.remove('hidden');
-                initMatrixRain(); // Start/restart rain
+                initMatrixRain(); 
             }
 
             gameSelectBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const game = btn.dataset.game;
-                    if (game === 'breakout') {
+                    if (game === 'f1-reaction') {
+                        showGame('f1-reaction');
+                    } else if (game === 'breakout') {
                         showGame('breakout-game');
                     } else if (game === 'connect-four') {
                         showGame('connect-four');
@@ -455,13 +501,157 @@
             });
             matrixBackBtn.addEventListener('click', showGameSelection);
 
+
+            // --- F1 REACTION GAME INITIALIZATION ---
+            let f1Initialized = false;
+            function initF1ReactionGame() {
+                if (f1Initialized) {
+                    window.resetF1Game();
+                    return;
+                }
+
+                let f1GameState = 'WAITING';
+                let f1StartTime = 0;
+                let f1TimeoutIds = [];
+                
+                const f1Container = document.getElementById('f1-reaction-container');
+                const f1StatusText = document.getElementById('f1-status-text');
+                const f1TimeDisplay = document.getElementById('f1-time-display');
+                const f1ComparisonText = document.getElementById('f1-comparison-text');
+                
+                const f1Ranks = [
+                    { threshold: 100, text: "False Start! Pure luck. Humans physically can't react in under 100ms!", color: "text-red-500" },
+                    { threshold: 150, text: "Faster than Brett closing his incognito tabs when someone walks in.", color: "text-yellow-400" },
+                    { threshold: 200, text: "Faster than Brett changing the playlist from Ariana Grande to Joe Rogan when the boys get in the car.", color: "text-yellow-400" },
+                    { threshold: 250, text: "Elite! Professional F1 Driver.", color: "text-green-400" },
+                    { threshold: 300, text: "Great! Olympic Sprinter off the blocks.", color: "text-blue-400" },
+                    { threshold: 400, text: "Fast! A cheetah pouncing on its prey.", color: "text-white" },
+                    { threshold: 600, text: "Average. You have the reflexes of a house cat.", color: "text-gray-400" },
+                    { threshold: 1000, text: "Sluggish. Slower than a Galapagos tortoise.", color: "text-gray-500" },
+                    { threshold: Infinity, text: "Glacial. You're a three-toed sloth.", color: "text-gray-700" }
+                ];
+
+                function turnOnLight(index) {
+                    document.getElementById(`light-${index}-a`).classList.add('on');
+                    document.getElementById(`light-${index}-b`).classList.add('on');
+                }
+
+                function turnOffAllLights() {
+                    for (let i = 1; i <= 5; i++) {
+                        document.getElementById(`light-${i}-a`).classList.remove('on');
+                        document.getElementById(`light-${i}-b`).classList.remove('on');
+                    }
+                }
+
+                function clearAllTimeouts() {
+                    f1TimeoutIds.forEach(id => clearTimeout(id));
+                    f1TimeoutIds = [];
+                }
+
+                window.resetF1Game = function() {
+                    f1GameState = 'WAITING';
+                    clearAllTimeouts();
+                    turnOffAllLights();
+                    f1StatusText.innerText = "Tap anywhere to start";
+                    f1StatusText.className = "text-2xl md:text-4xl font-bold mb-2 animate-pulse";
+                    f1StatusText.classList.remove('hidden');
+                    f1TimeDisplay.classList.add('hidden');
+                    f1ComparisonText.innerText = '';
+                };
+
+                function startF1Game() {
+                    f1GameState = 'STARTING';
+                    f1StatusText.classList.add('hidden');
+                    f1TimeDisplay.classList.add('hidden');
+                    f1ComparisonText.innerText = '';
+                    turnOffAllLights();
+                    clearAllTimeouts();
+
+                    for (let i = 1; i <= 5; i++) {
+                        let id = setTimeout(() => {
+                            turnOnLight(i);
+                            if (i === 5) {
+                                f1GameState = 'READY';
+                                let holdTime = Math.random() * 4000 + 200;
+                                
+                                let goId = setTimeout(() => {
+                                    turnOffAllLights();
+                                    f1GameState = 'GO';
+                                    f1StartTime = performance.now();
+                                }, holdTime);
+                                f1TimeoutIds.push(goId);
+                            }
+                        }, i * 1000);
+                        f1TimeoutIds.push(id);
+                    }
+                }
+
+                function handleF1Tap(e) {
+                    if (e.target.closest('button')) return; // ignore UI button taps
+
+                    if (f1GameState === 'WAITING' || f1GameState === 'FINISHED' || f1GameState === 'FALSE_START') {
+                        startF1Game();
+                    } 
+                    else if (f1GameState === 'STARTING' || f1GameState === 'READY') {
+                        f1GameState = 'FALSE_START';
+                        clearAllTimeouts();
+                        turnOffAllLights();
+                        
+                        f1StatusText.innerText = "JUMPED THE GUN!";
+                        f1StatusText.classList.remove('hidden', 'animate-pulse');
+                        f1StatusText.className = "text-3xl md:text-5xl font-bold mb-2 text-red-500";
+                        
+                        f1ComparisonText.innerText = "You tapped before the lights went out. Tap to try again.";
+                        f1ComparisonText.className = "text-lg md:text-2xl text-gray-400 mt-2 h-16";
+                    } 
+                    else if (f1GameState === 'GO') {
+                        let endTime = performance.now();
+                        let reactionTimeMs = endTime - f1StartTime;
+                        f1GameState = 'FINISHED';
+                        showF1Results(reactionTimeMs);
+                    }
+                }
+
+                function showF1Results(timeMs) {
+                    let seconds = (timeMs / 1000).toFixed(3);
+                    f1TimeDisplay.innerText = seconds + "s";
+                    f1TimeDisplay.classList.remove('hidden');
+                    
+                    let rank = f1Ranks.find(r => timeMs <= r.threshold);
+                    
+                    f1ComparisonText.innerText = rank.text;
+                    f1ComparisonText.className = `text-lg md:text-2xl mt-2 h-16 font-semibold ${rank.color} max-w-2xl px-4 mx-auto`;
+                    
+                    f1StatusText.innerText = "Tap to play again";
+                    f1StatusText.className = "text-xl md:text-2xl font-bold mb-2 text-gray-400 animate-pulse mt-4 md:mt-8";
+                    f1StatusText.classList.remove('hidden');
+                }
+
+                f1Container.addEventListener('pointerdown', (e) => {
+                    if (!e.target.closest('button')) {
+                        e.preventDefault(); 
+                        handleF1Tap(e);
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && !f1Container.classList.contains('hidden')) {
+                        e.preventDefault(); 
+                        handleF1Tap(e);
+                    }
+                });
+
+                f1Initialized = true;
+                window.resetF1Game();
+            }
+
+
             // --- MATRIX RAIN INITIALIZATION ---
             function initMatrixRain() {
                 const canvas = document.getElementById('matrix-canvas');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 
-                // The phrase to be spelled out, with spaces.
                 const phrase = "BRETT  IS  GAY  ";
 
                 const resizeCanvas = () => {
@@ -474,42 +664,34 @@
                 const fontSize = 16;
                 const columns = Math.floor(canvas.width / fontSize);
 
-                // Each element in rainDrops is now an object tracking its y position and its character index in the phrase.
                 const rainDrops = [];
                 for(let i = 0; i < columns; i++) {
                     rainDrops[i] = {
-                        y: Math.random() * canvas.height, // Start at a random height
-                        charIndex: Math.floor(Math.random() * phrase.length) // Start at a random character
+                        y: Math.random() * canvas.height, 
+                        charIndex: Math.floor(Math.random() * phrase.length) 
                     };
                 }
 
                 function drawMatrix() {
-                    // Semi-transparent black background for the fading trail effect
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    ctx.fillStyle = '#0F0'; // Classic green color
+                    ctx.fillStyle = '#0F0'; 
                     ctx.font = fontSize + 'px monospace';
 
                     for(let i = 0; i < rainDrops.length; i++) {
-                        // Get the correct character from the phrase based on the stream's current index
                         const text = phrase.charAt(rainDrops[i].charIndex);
                         
-                        // Only draw the character if it's not a space
                         if (text !== ' ') {
                             ctx.fillText(text, i * fontSize, rainDrops[i].y * fontSize);
                         }
                         
-                        // If the stream has gone off-screen, reset it to the top with a new random character index
                         if(rainDrops[i].y * fontSize > canvas.height && Math.random() > 0.975){
                             rainDrops[i].y = 0;
                             rainDrops[i].charIndex = Math.floor(Math.random() * phrase.length);
                         }
 
-                        // Move the stream down for the next frame
                         rainDrops[i].y++;
-                        
-                        // Move to the next character in the phrase, looping back to the start if necessary
                         rainDrops[i].charIndex = (rainDrops[i].charIndex + 1) % phrase.length;
                     }
                 }
@@ -561,12 +743,12 @@
                     try {
                         let time = Tone.now();
                         if (time <= lastSoundTime) {
-                            time = lastSoundTime + 0.05; // Increased offset
+                            time = lastSoundTime + 0.05; 
                         }
                         synth.triggerAttackRelease(...args, time);
                         lastSoundTime = time;
                     } catch (e) {
-                        // Fail silently if there's a rare scheduling conflict
+                        // Fail silently 
                     }
                 }
 
@@ -969,9 +1151,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
