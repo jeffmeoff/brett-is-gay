@@ -118,6 +118,79 @@
             z-index: 20;
         }
 
+        /* Matrix Custom UI Styles */
+        #matrix-controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            background: rgba(0, 20, 0, 0.8);
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid #0F0;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            display: none; /* hidden by default until fullscreen */
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #matrix-controls.hidden-ui {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        #matrix-phrase-input {
+            background: transparent;
+            color: #0F0;
+            border: none;
+            border-bottom: 2px solid #0F0;
+            font-family: monospace;
+            font-size: 1.25rem;
+            text-align: center;
+            outline: none;
+            width: 350px;
+            max-width: 80vw;
+            padding: 6px;
+            transition: box-shadow 0.2s;
+        }
+        #matrix-phrase-input:focus {
+            box-shadow: 0px 8px 10px -5px rgba(0, 255, 0, 0.5);
+        }
+        #matrix-phrase-input::placeholder {
+            color: rgba(0, 255, 0, 0.3);
+        }
+        #matrix-mode-toggle {
+            background: transparent;
+            color: #0F0;
+            border: 1px solid #0F0;
+            padding: 6px 12px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+        #matrix-mode-toggle:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px rgba(0,255,0,0.5);
+        }
+        #matrix-speed-slider {
+            width: 100%;
+            accent-color: #0F0;
+            cursor: pointer;
+        }
+        .matrix-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 8px;
+        }
+
         /* F1 Reaction Timer Styles */
         #f1-reaction-container {
             user-select: none;
@@ -235,6 +308,17 @@
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </button>
 
+            <div id="matrix-controls">
+                <label for="matrix-phrase-input" class="text-[#0F0] font-mono text-sm opacity-80 uppercase tracking-widest">System Override</label>
+                <input type="text" id="matrix-phrase-input" value="BRETT IS GAY" placeholder="Type to change the code..." autocomplete="off" spellcheck="false">
+                <button id="matrix-mode-toggle">Enable Classic Matrix</button>
+                <div class="matrix-slider-container">
+                    <span class="text-[#0F0] font-mono text-[10px] opacity-80 uppercase">Speed:</span>
+                    <input type="range" id="matrix-speed-slider" min="10" max="60" value="45">
+                </div>
+                <div class="text-[#0F0] font-mono text-[10px] opacity-60 mt-1">(Tap background to hide/show)</div>
+            </div>
+
             <div id="game-selection-menu" class="w-full h-full flex flex-col items-center justify-center space-y-6 p-4">
                  <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 text-center" style="font-family: 'Press Start 2P', cursive;">SELECT GAME</h1>
                  <button data-game="f1-reaction" class="game-select-btn w-[280px] text-xl bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">F1 Reaction</button>
@@ -267,7 +351,6 @@
                     <p id="f1-comparison-text" class="text-lg md:text-2xl text-gray-300 mt-2 h-16 max-w-2xl px-2"></p>
                 </div>
 
-                <!-- Missing Modal that caused the JS error -->
                 <div id="f1-result-modal" class="absolute inset-0 bg-gray-900 bg-opacity-95 z-40 hidden flex-col items-center justify-center p-4">
                     <h2 id="f1-modal-title"></h2>
                     <p id="f1-modal-time"></p>
@@ -450,6 +533,10 @@
                 matrixCanvas.classList.remove('fullscreen');
                 matrixCanvas.style.display = 'block';
                 matrixBackBtn.classList.add('hidden');
+                
+                const controls = document.getElementById('matrix-controls');
+                if (controls) controls.style.display = 'none';
+
                 initMatrixRain(); 
             }
 
@@ -461,6 +548,9 @@
                 gameSelectionMenu.style.display = 'none';
                 matrixCanvas.style.display = 'none'; 
                 matrixBackBtn.classList.add('hidden');
+                
+                const controls = document.getElementById('matrix-controls');
+                if (controls) controls.style.display = 'none';
 
                 gameContainers.forEach(c => {
                     c.classList.toggle('hidden', c.id !== `${gameName}-container`);
@@ -486,6 +576,13 @@
                 matrixCanvas.style.display = 'block';
                 matrixCanvas.classList.add('fullscreen');
                 matrixBackBtn.classList.remove('hidden');
+                
+                const controls = document.getElementById('matrix-controls');
+                if (controls) {
+                    controls.style.display = 'flex';
+                    controls.classList.remove('hidden-ui');
+                }
+
                 initMatrixRain(); 
             }
 
@@ -676,28 +773,114 @@
             }
             
             // --- MATRIX RAIN INITIALIZATION ---
+            let matrixInitialized = false;
+            let matrixPhraseText = "BRETT IS GAY   ";
+            let isClassicMode = false;
+            let matrixFps = 45;
+            let matrixInterval = 1000 / matrixFps;
+            let matrixThen = Date.now();
+            let matrixRainDrops = [];
+            const classicChars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+
             function initMatrixRain() {
                 const canvas = document.getElementById('matrix-canvas');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
-                
-                const phrase = "BRETT  IS  GAY  ";
-
-                const resizeCanvas = () => {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                };
-                resizeCanvas();
-                window.addEventListener('resize', resizeCanvas);
+                const input = document.getElementById('matrix-phrase-input');
+                const controls = document.getElementById('matrix-controls');
+                const modeToggle = document.getElementById('matrix-mode-toggle');
+                const speedSlider = document.getElementById('matrix-speed-slider');
                 
                 const fontSize = 16;
-                const columns = Math.floor(canvas.width / fontSize);
+                let columns;
 
-                const rainDrops = [];
+                if (!matrixInitialized) {
+                    // Setup Event Listeners only once
+                    input.addEventListener('input', (e) => {
+                        const val = e.target.value;
+                        matrixPhraseText = (val.length > 0 ? val : ' ') + "   ";
+                        
+                        for(let i = 0; i < matrixRainDrops.length; i++) {
+                            if (matrixRainDrops[i] && matrixRainDrops[i].charIndex >= matrixPhraseText.length) {
+                                matrixRainDrops[i].charIndex = Math.floor(Math.random() * matrixPhraseText.length);
+                            }
+                        }
+                    });
+
+                    modeToggle.addEventListener('click', () => {
+                        isClassicMode = !isClassicMode;
+                        if (isClassicMode) {
+                            modeToggle.innerText = 'Switch to Custom Text';
+                            input.style.display = 'none';
+                            
+                            for(let i = 0; i < matrixRainDrops.length; i++) {
+                                matrixRainDrops[i].y = Math.random() * (canvas.height / fontSize);
+                                matrixRainDrops[i].isBrettCol = Math.random() < 0.04;
+                                if (matrixRainDrops[i].isBrettCol) {
+                                    matrixRainDrops[i].charIndex = 0;
+                                }
+                            }
+                        } else {
+                            modeToggle.innerText = 'Enable Classic Matrix';
+                            input.style.display = 'block';
+                        }
+                    });
+
+                    speedSlider.addEventListener('input', (e) => {
+                        matrixFps = parseInt(e.target.value, 10);
+                        matrixInterval = 1000 / matrixFps;
+                    });
+
+                    controls.addEventListener('click', (e) => {
+                        e.stopPropagation(); // prevent UI tap from hiding UI
+                    });
+
+                    canvas.addEventListener('click', () => {
+                        // Only toggle UI if we are in full screen matrix mode
+                        if (canvas.classList.contains('fullscreen')) {
+                            controls.classList.toggle('hidden-ui');
+                            if (controls.classList.contains('hidden-ui')) {
+                                input.blur();
+                            }
+                        }
+                    });
+
+                    const resizeCanvas = () => {
+                        canvas.width = window.innerWidth;
+                        canvas.height = window.innerHeight;
+                        columns = Math.floor(canvas.width / fontSize);
+                        
+                        let newRainDrops = [];
+                        for(let i = 0; i < columns; i++) {
+                            if (matrixRainDrops[i]) {
+                                newRainDrops[i] = matrixRainDrops[i];
+                            } else {
+                                let isBrett = Math.random() < 0.04;
+                                newRainDrops[i] = {
+                                    y: Math.random() * (canvas.height / fontSize), 
+                                    charIndex: isBrett ? 0 : Math.floor(Math.random() * matrixPhraseText.length),
+                                    isBrettCol: isBrett
+                                };
+                            }
+                        }
+                        matrixRainDrops = newRainDrops;
+                    };
+                    
+                    window.addEventListener('resize', resizeCanvas);
+                    matrixInitialized = true;
+                }
+
+                // Initial setup on function call (resets drops for new screen or page load)
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                columns = Math.floor(canvas.width / fontSize);
+                matrixRainDrops = [];
                 for(let i = 0; i < columns; i++) {
-                    rainDrops[i] = {
-                        y: Math.random() * canvas.height, 
-                        charIndex: Math.floor(Math.random() * phrase.length) 
+                    let isBrett = Math.random() < 0.04;
+                    matrixRainDrops[i] = {
+                        y: Math.random() * (canvas.height / fontSize), 
+                        charIndex: isBrett ? 0 : Math.floor(Math.random() * matrixPhraseText.length),
+                        isBrettCol: isBrett
                     };
                 }
 
@@ -705,29 +888,86 @@
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    ctx.fillStyle = '#0F0'; 
                     ctx.font = fontSize + 'px monospace';
+                    const brettPhrase = "BRETT IS GAY   ";
 
-                    for(let i = 0; i < rainDrops.length; i++) {
-                        const text = phrase.charAt(rainDrops[i].charIndex);
+                    for(let i = 0; i < matrixRainDrops.length; i++) {
+                        let text, prevText;
+
+                        if (isClassicMode) {
+                            if (matrixRainDrops[i].isBrettCol) {
+                                // Secretly spell out BRETT IS GAY on these specific columns
+                                if (matrixRainDrops[i].charIndex >= brettPhrase.length) {
+                                    matrixRainDrops[i].charIndex = 0;
+                                }
+                                text = brettPhrase.charAt(matrixRainDrops[i].charIndex);
+                                
+                                let prevIndex = matrixRainDrops[i].charIndex - 1;
+                                if (prevIndex < 0) prevIndex = brettPhrase.length - 1;
+                                prevText = brettPhrase.charAt(prevIndex);
+
+                                matrixRainDrops[i].charIndex = (matrixRainDrops[i].charIndex + 1) % brettPhrase.length;
+                            } else {
+                                // Standard classic flickering characters for the rest
+                                text = classicChars.charAt(Math.floor(Math.random() * classicChars.length));
+                                prevText = classicChars.charAt(Math.floor(Math.random() * classicChars.length));
+                            }
+                        } else {
+                            if (matrixRainDrops[i].charIndex >= matrixPhraseText.length) {
+                                matrixRainDrops[i].charIndex = 0;
+                            }
+                            text = matrixPhraseText.charAt(matrixRainDrops[i].charIndex);
+                            
+                            let prevIndex = matrixRainDrops[i].charIndex - 1;
+                            if (prevIndex < 0) prevIndex = matrixPhraseText.length - 1;
+                            prevText = matrixPhraseText.charAt(prevIndex);
+
+                            matrixRainDrops[i].charIndex = (matrixRainDrops[i].charIndex + 1) % matrixPhraseText.length;
+                        }
                         
+                        // 1. Draw the PREVIOUS character in solid GREEN
+                        if (prevText !== ' ') {
+                            ctx.fillStyle = '#0F0';
+                            ctx.fillText(prevText, i * fontSize, (matrixRainDrops[i].y - 1) * fontSize);
+                        }
+
+                        // 2. Draw the CURRENT character in a soft whitish-green
                         if (text !== ' ') {
-                            ctx.fillText(text, i * fontSize, rainDrops[i].y * fontSize);
+                            ctx.fillStyle = '#CEFFCE';
+                            ctx.shadowBlur = 4;
+                            ctx.shadowColor = '#0F0';
+                            ctx.fillText(text, i * fontSize, matrixRainDrops[i].y * fontSize);
+                            ctx.shadowBlur = 0;
                         }
                         
-                        if(rainDrops[i].y * fontSize > canvas.height && Math.random() > 0.975){
-                            rainDrops[i].y = 0;
-                            rainDrops[i].charIndex = Math.floor(Math.random() * phrase.length);
+                        if(matrixRainDrops[i].y * fontSize > canvas.height && Math.random() > 0.975){
+                            matrixRainDrops[i].y = 0;
+                            if (!isClassicMode) {
+                                matrixRainDrops[i].charIndex = Math.floor(Math.random() * matrixPhraseText.length);
+                            } else {
+                                // Re-roll the Easter egg chance for this specific drop!
+                                matrixRainDrops[i].isBrettCol = Math.random() < 0.04;
+                                if (matrixRainDrops[i].isBrettCol) {
+                                    matrixRainDrops[i].charIndex = 0;
+                                }
+                            }
                         }
 
-                        rainDrops[i].y++;
-                        rainDrops[i].charIndex = (rainDrops[i].charIndex + 1) % phrase.length;
+                        matrixRainDrops[i].y++;
                     }
                 }
 
+                matrixThen = Date.now();
                 function animateMatrix() {
-                    drawMatrix();
                     activeGameLoop = requestAnimationFrame(animateMatrix);
+                    
+                    let now = Date.now();
+                    let delta = now - matrixThen;
+                    
+                    if (delta > matrixInterval) {
+                        matrixThen = now - (delta % matrixInterval);
+                        drawMatrix();
+                    }
                 }
                 
                 if (activeGameLoop) cancelAnimationFrame(activeGameLoop);
