@@ -61,7 +61,7 @@
 
   // Coming-soon games
   document.querySelectorAll('.game.is-disabled').forEach((a) =>
-    a.addEventListener('click', () => toast('Under construction! Check back soon 🚧')));
+    a.addEventListener('click', () => toast('Coming soon!!! Check back l8r')));
 
   // Webring "Random" goes to a random game
   const ring = $('#ringRandom');
