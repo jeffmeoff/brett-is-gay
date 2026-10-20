@@ -1,1427 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <title>brettisgay.com</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>brettisgay.com | Brett's Totally Rad Homepage: Photos &amp; Games</title>
+<meta name="description" content="The #1 site on the information superhighway about my cousin Brett. Photos, free phone games (F1 Reaction, Breakout, Connect Four, Matrix Mode), a guestbook and a hit counter. Brett approved.">
+<link rel="canonical" href="https://brettisgay.com/">
+<meta name="theme-color" content="#000033">
 
-    <link rel="icon" type="image/png" href="images/favicon.png">
+<!-- Open Graph / Twitter link previews -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="brettisgay.com">
+<meta property="og:url" content="https://brettisgay.com/">
+<meta property="og:title" content="brettisgay.com: Brett's Totally Rad Homepage">
+<meta property="og:description" content="Photos, games and a guestbook, all about my cousin Brett. Best viewed in Netscape Navigator.">
+<meta property="og:image" content="https://brettisgay.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Brett in a neon tank top and pink shorts next to rainbow text: Brett is gay dot com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="brettisgay.com: Brett's Totally Rad Homepage">
+<meta name="twitter:description" content="Photos, games and a guestbook, all about my cousin Brett.">
+<meta name="twitter:image" content="https://brettisgay.com/og-image.jpg">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap" rel="stylesheet">
-    
-    <style>
-        /* General Styles */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; 
-            overflow: hidden; 
-            touch-action: none;
-        }
-        #app-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 4rem; 
-            overflow: hidden;
-        }
-        .page {
-            display: none; 
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-        }
-        .page.active {
-            display: block; 
-        }
+<!-- Icons -->
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 
-        /* Transition Screen */
-        #transition-screen {
-            transition: opacity 1s ease-in-out;
-        }
-
-        /* Feed Page Styles */
-        #feed-page {
-             background-color: #f5f3ef;
-             background-image: url('https://www.transparenttextures.com/patterns/light-paper-fibers.png');
-        }
-        .post-card {
-            background-color: white;
-            padding: 1rem;
-            padding-bottom: 3.5rem; 
-            border-radius: 0.25rem;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            position: relative;
-            break-inside: avoid;
-            margin-bottom: 1.5rem;
-        }
-        .post-card img {
-            width: 100%;
-            height: auto;
-            border: 1px solid #eee;
-        }
-        .post-card .caption {
-            font-family: 'Gochi Hand', cursive;
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            right: 1rem;
-            text-align: center;
-            font-size: 1.25rem;
-            color: #333;
-        }
-        
-        #feed-container {
-            column-count: 2;
-            column-gap: 1.5rem;
-        }
-        @media (max-width: 640px) {
-            #feed-container {
-                column-count: 1;
-            }
-        }
-
-        .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .modal { display: none; }
-        .modal.active { display: flex; }
-        .modal { z-index: 50; }
-
-        /* Game Page Styles */
-        #games-page {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            position: relative;
-        }
-        .game-container { display: none; }
-        .game-container.active { display: flex; }
-        #game-selection-menu {
-            position: relative;
-            z-index: 10;
-        }
-        #matrix-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        #matrix-canvas.fullscreen {
-            z-index: 20;
-        }
-
-        /* Matrix Custom UI Styles */
-        #matrix-controls {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 30;
-            background: rgba(0, 20, 0, 0.8);
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: 1px solid #0F0;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
-            display: none; /* hidden by default until fullscreen */
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        #matrix-controls.hidden-ui {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(-50%) translateY(-20px);
-        }
-        #matrix-phrase-input {
-            background: transparent;
-            color: #0F0;
-            border: none;
-            border-bottom: 2px solid #0F0;
-            font-family: monospace;
-            font-size: 1.25rem;
-            text-align: center;
-            outline: none;
-            width: 350px;
-            max-width: 80vw;
-            padding: 6px;
-            transition: box-shadow 0.2s;
-        }
-        #matrix-phrase-input:focus {
-            box-shadow: 0px 8px 10px -5px rgba(0, 255, 0, 0.5);
-        }
-        #matrix-phrase-input::placeholder {
-            color: rgba(0, 255, 0, 0.3);
-        }
-        #matrix-mode-toggle {
-            background: transparent;
-            color: #0F0;
-            border: 1px solid #0F0;
-            padding: 6px 12px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.2s;
-            margin-top: 4px;
-            text-transform: uppercase;
-        }
-        #matrix-mode-toggle:hover {
-            background: rgba(0, 255, 0, 0.2);
-            box-shadow: 0 0 10px rgba(0,255,0,0.5);
-        }
-        #matrix-speed-slider {
-            width: 100%;
-            accent-color: #0F0;
-            cursor: pointer;
-        }
-        .matrix-slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            margin-top: 8px;
-        }
-
-        /* F1 Reaction Timer Styles */
-        #f1-reaction-container {
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none; 
-            overscroll-behavior: none; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-        .light-box {
-            background-color: #1f2937;
-            border: 2px solid #374151;
-        }
-        .light {
-            width: 60px;
-            height: 60px;
-            background-color: #4b1113; 
-            border-radius: 50%;
-            transition: background-color 0.05s, box-shadow 0.05s;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-        .light.on {
-            background-color: #ff0000; 
-            box-shadow: 0 0 30px #ff0000, inset 0 0 10px rgba(255,255,255,0.5);
-        }
-        @media (max-width: 600px) {
-            .light {
-                width: 12vw; 
-                height: 12vw;
-                max-width: 50px;
-                max-height: 50px;
-            }
-            .light-box {
-                padding: 0.25rem;
-                gap: 0.25rem;
-            }
-        }
-
-        /* Breakout Game Styles */
-        #breakout-game-container {
-            font-family: 'Press Start 2P', cursive;
-            color: #FFFFFF;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-        }
-        #game-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        #game-container { border: 4px solid #00FFFF; border-radius: 10px; box-shadow: 0 0 20px #FF00FF, inset 0 0 20px #FF00FF; position: relative; width: 100%; height: 100%; max-width: 480px; max-height: 800px; }
-        #breakoutCanvas { background-color: #000; display: block; width: 100%; height: 100%; cursor: pointer; }
-        #ui-overlay { position: absolute; top: 15px; left: 20px; right: 20px; display: flex; justify-content: space-between; color: #fff; font-size: clamp(12px, 3vw, 1rem); pointer-events: none; text-shadow: 2px 2px 4px #FF00FF; }
-        #modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.85); padding: 30px; border-radius: 10px; border: 4px solid #00FFFF; text-align: center; z-index: 100; width: 80%; display: none; }
-        #modal h2 { font-size: clamp(1.5em, 5vw, 2em); margin-bottom: 10px; color: #FFFF00; }
-        #modal p { font-size: clamp(0.8em, 3vw, 1em); margin-bottom: 20px; color: #00FFFF; }
-        #modal button { background-color: #FF00FF; color: white; padding: 15px 25px; border: 2px solid white; border-radius: 5px; font-family: 'Press Start 2P', cursive; cursor: pointer; font-size: clamp(0.8em, 4vw, 1em); box-shadow: 0 0 10px #fff; }
-
-        /* Connect Four Game Styles */
-        #connect-four-container {
-            font-family: 'Poppins', sans-serif;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            padding: 1rem;
-            background-color: #f3f4f6; /* gray-100 */
-        }
-        #board-container { position: relative; width: 100%; max-width: 560px; aspect-ratio: 7 / 6; margin-bottom: 1rem; }
-        .board { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #3b82f6; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; padding: 8px; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1); }
-        .cell { background-color: #f3f4f6; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
-        .cell .piece { width: 90%; height: 90%; border-radius: 50%; transform: scale(0); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .cell .piece.player1 { background-color: #ef4444; box-shadow: inset 0 0 10px rgba(0,0,0,0.4); transform: scale(1); }
-        .cell .piece.player2 { background-color: #facc15; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); transform: scale(1); }
-        #column-selectors { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(7, 1fr); z-index: 10; }
-        .column { cursor: pointer; border-radius: 0.5rem; transition: background-color 0.2s ease-in-out; }
-        .column:hover { background-color: rgba(255, 255, 255, 0.2); }
-        .column.disabled { cursor: not-allowed; }
-        .column.disabled:hover { background-color: transparent; }
-        .winning-cell .piece { animation: bounce 0.8s ease-in-out infinite; }
-        @keyframes bounce { 0%, 100% { transform: scale(1.05); } 50% { transform: scale(0.85); } }
-    </style>
+<link rel="preload" as="image" href="img/this-is-brett.webp" type="image/webp" fetchpriority="high">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 
-    <div id="transition-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
-        <h1 id="transition-text" class="font-bold text-green-500 text-center px-4 break-words" style="font-family: 'Press Start 2P', cursive; font-size: clamp(1rem, 5vw, 2rem);">brettisgay.com</h1>
+<!-- ===== scrolling ticker (CSS, not <marquee>) ===== -->
+<div class="ticker" role="marquee" aria-label="Site news">
+  <div class="ticker__track">
+    <span>★ WELCOME 2 BRETTISGAY.COM ★ The #1 site on the information superhighway about my cousin Brett ★ Now with 4 games!!! ★ Send us ur photos of Brett ★ MERCH COMING SOON ★ Sign my guestbook!!! ★&nbsp;</span>
+    <span aria-hidden="true">★ WELCOME 2 BRETTISGAY.COM ★ The #1 site on the information superhighway about my cousin Brett ★ Now with 4 games!!! ★ Send us ur photos of Brett ★ MERCH COMING SOON ★ Sign my guestbook!!! ★&nbsp;</span>
+  </div>
+</div>
+
+<div class="page" id="top">
+
+  <!-- ===== header ===== -->
+  <header class="masthead">
+    <p class="masthead__pre">~*~ Welcome to ~*~</p>
+    <h1 class="wordart"><span class="wordart__a">Brett</span> <span class="nowrap"><span class="wordart__b">is Gay</span><span class="wordart__c">.com</span></span></h1>
+    <p class="masthead__sub">Est. 2026 &bull; 100% Brett Approved&trade; &bull; He knows. He's fine with it.</p>
+
+    <div class="masthead__row">
+      <svg class="construction" viewBox="0 0 176 52" width="176" height="52" role="img" aria-label="Under construction">
+        <defs>
+          <pattern id="stripes" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="8" height="16" fill="#111"/><rect x="8" width="8" height="16" fill="#ffd400"/>
+          </pattern>
+        </defs>
+        <rect x="1" y="1" width="174" height="50" rx="3" fill="#ffd400" stroke="#111" stroke-width="2"/>
+        <rect x="4" y="4" width="168" height="8" fill="url(#stripes)"/>
+        <rect x="4" y="40" width="168" height="8" fill="url(#stripes)"/>
+        <circle cx="20" cy="18" r="3.2" fill="#111"/>
+        <path d="M20 21 v8 m0 0 l-4 7 m4 -7 l4 7 m-4 -12 l6 3 l6 -8" stroke="#111" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M32 15 l3 -3 l2 2 z" fill="#111"/>
+        <text x="104" y="24" text-anchor="middle" font-family="Verdana, sans-serif" font-weight="700" font-size="11" fill="#111">UNDER</text>
+        <text x="104" y="36" text-anchor="middle" font-family="Verdana, sans-serif" font-weight="700" font-size="11" fill="#111">CONSTRUCTION</text>
+        <circle class="construction__light" cx="164" cy="26" r="5" fill="#ff3b00"/>
+      </svg>
+
+      <div class="counter" aria-label="Fake visitor counter">
+        <span class="counter__label">You are visitor #</span>
+        <span class="counter__digits" id="hits">0013337</span>
+      </div>
     </div>
 
-    <div id="app-container">
-        
-        <div id="feed-page" class="page">
-            <header class="bg-white border-b border-gray-300 sticky top-0 z-10" style="background-color: #f5f3ef; background-image: url('https://www.transparenttextures.com/patterns/light-paper-fibers.png');">
-                <div class="max-w-4xl mx-auto py-3 px-4 text-center">
-                    <h1 class="text-4xl md:text-5xl text-gray-700" style="font-family: 'Gochi Hand', cursive;">brettisgay.com</h1>
-                </div>
-            </header>
+    <button class="btn98 midi" id="midi" type="button" aria-pressed="false">
+      <span aria-hidden="true">&#9835;</span> MIDI: <b id="midiState">OFF</b>
+    </button>
+  </header>
 
-            <div class="max-w-4xl mx-auto px-4 pt-6 text-center">
-                <p class="text-xl md:text-2xl text-gray-800" style="font-family: 'Gochi Hand', cursive;">
-                    Welcome to brettisgay.com
-                </p>
-            </div>
+  <!-- ===== main nav ===== -->
+  <nav class="nav" aria-label="Main">
+    <a class="btn98" href="#photos">&#128247; Photos</a>
+    <a class="btn98" href="#games">&#127918; Games <span class="new">NEW!</span></a>
+    <a class="btn98" href="#facts">&#11088; Brett Facts</a>
+    <a class="btn98" href="#guestbook">&#128214; Guestbook</a>
+  </nav>
 
-            <main id="feed-container" class="max-w-4xl mx-auto p-4 md:p-8">
-            </main>
+  <main id="main">
 
-            <div class="max-w-4xl mx-auto p-4 text-center pb-12">
-                <p class="text-2xl text-gray-600" style="font-family: 'Gochi Hand', cursive;">
-                    I NEED YOUR HELP! This Website is only the begining, please send your GAY photos of Brett to brettisgaydotcom@gmail.com Also MERCH COMING SOON! Thanks for scrolling! That's all the gay stuff for now.
-                </p>
-            </div>
+    <!-- ===== welcome ===== -->
+    <section class="box box--welcome" aria-labelledby="welcome-h">
+      <h2 id="welcome-h" class="box__title">Welcome to brettisgay.com!!!</h2>
+      <p><a href="img/full/this-is-brett.webp" class="dancer-link" aria-label="This is Brett: open full size photo"><img class="dancer" src="img/this-is-brett.webp" width="360" height="480" alt="Brett in a neon yellow tank top and pink shorts, posing on red rocks" fetchpriority="high" decoding="async"></a></p>
+      <p class="lead">This is Brett.</p>
+      <p>This whole site is dedicated to my cousin Brett. It is <b>only the beginning</b>. Bookmark it (<kbd>Ctrl</kbd>+<kbd>D</kbd>), tell ur friends, and check back often because I update it like every week. <span class="new">NEW!</span> games just added!</p>
+    </section>
+
+    <!-- ===== photo album ===== -->
+    <section class="box box--album" id="photos" aria-labelledby="photos-h">
+      <h2 id="photos-h" class="box__title">&#128247; Brett's Photo Album &#128247;</h2>
+      <p class="small">Click 4 full size!!! (it's ok, they load fast now)</p>
+      <ul class="album">
+        <li class="polaroid">
+          <a href="img/full/brett-carson-1.webp"><img src="img/brett-carson-1.webp" width="360" height="480" loading="lazy" decoding="async" alt="Brett and Carson at a table with friends, Brett in a gray cap"></a>
+          <span class="polaroid__cap">Brett, Gay. Carson, avoiding Gay stuff</span>
+        </li>
+        <li class="polaroid">
+          <a href="img/full/mega.webp"><img src="img/mega.webp" width="360" height="480" loading="lazy" decoding="async" alt="Brett leaning in close to a friend on a snowmobile trip"></a>
+          <span class="polaroid__cap">Mega Gay! <span class="new">NEW!</span></span>
+        </li>
+        <li class="polaroid">
+          <a href="img/full/brett-carson-2.webp"><img src="img/brett-carson-2.webp" width="360" height="480" loading="lazy" decoding="async" alt="Brett and Carson at a cabin table, mid-laugh"></a>
+          <span class="polaroid__cap">Super Gay!</span>
+        </li>
+        <li class="polaroid">
+          <a href="img/full/field.webp"><img src="img/field.webp" width="420" height="420" loading="lazy" decoding="async" alt="Brett lounging in a field of yellow wildflowers with mountains behind him"></a>
+          <span class="polaroid__cap">Gay! (in a field)</span>
+        </li>
+        <li class="polaroid">
+          <a href="img/full/carson.webp"><img src="img/carson.webp" width="360" height="480" loading="lazy" decoding="async" alt="Brett gently holding Carson's face in a kitchen"></a>
+          <span class="polaroid__cap">Don't do it Carson!</span>
+        </li>
+        <li class="polaroid polaroid--empty">
+          <a href="#help-h" class="slot"><span class="slot__q" aria-hidden="true">?</span><span>UR BRETT PHOTO HERE</span></a>
+          <span class="polaroid__cap">Send it in!!!</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ===== games: Win98 window ===== -->
+    <section class="win" id="games" aria-labelledby="games-h">
+      <div class="win__bar">
+        <span class="win__icon" aria-hidden="true"></span>
+        <h2 id="games-h" class="win__title">C:\BRETT\GAMES.EXE</h2>
+        <span class="win__ctrls" aria-hidden="true"><i>_</i><i>&#9633;</i><i>&times;</i></span>
+      </div>
+      <div class="win__menu" aria-hidden="true"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>H</u>elp</div>
+      <div class="win__body">
+        <p class="small">Double-click... jk, just tap a game. Every game has its own link, so u can send it to ur friends!</p>
+        <div class="games">
+          <a class="btn98 game" href="games/f1-reaction/">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="2" y="9" width="28" height="14" rx="2" fill="#222"/><g fill="#e00"><circle cx="8" cy="16" r="3"/><circle cx="16" cy="16" r="3"/><circle cx="24" cy="16" r="3"/></g></svg>
+            <span><b>F1 Reaction</b><small>Faster than Brett closing his incognito tabs?</small><small class="best" data-best="f1" hidden></small></span>
+          </a>
+          <a class="btn98 game" href="games/breakout/">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><g><rect x="2" y="4" width="8" height="4" fill="#f00"/><rect x="12" y="4" width="8" height="4" fill="#f80"/><rect x="22" y="4" width="8" height="4" fill="#ff0"/><rect x="2" y="10" width="8" height="4" fill="#0c0"/><rect x="12" y="10" width="8" height="4" fill="#00f"/><rect x="22" y="10" width="8" height="4" fill="#80f"/></g><circle cx="17" cy="21" r="2.5" fill="#0cc"/><rect x="10" y="27" width="12" height="3" fill="#f0f"/></svg>
+            <span><b>Breakout Deluxe</b><small>10 levels, 7 power-ups, 1 evil AI paddle</small><small class="best" data-best="breakout" hidden></small></span>
+          </a>
+          <a class="btn98 game" href="games/connect-four/">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="2" y="5" width="28" height="22" rx="3" fill="#2457d6"/><g fill="#fff"><circle cx="9" cy="12" r="3"/><circle cx="16" cy="12" r="3"/><circle cx="23" cy="20" r="3"/></g><circle cx="23" cy="12" r="3" fill="#e33"/><circle cx="9" cy="20" r="3" fill="#fc0"/><circle cx="16" cy="20" r="3" fill="#e33"/></svg>
+            <span><b>Connect Four</b><small>vs. a computer that's way too good</small><small class="best" data-best="c4" hidden></small></span>
+          </a>
+          <a class="btn98 game" href="games/matrix/">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect width="32" height="32" fill="#000"/><g fill="#0f0" font-family="monospace" font-size="8"><text x="3" y="10">B</text><text x="13" y="16">R</text><text x="23" y="9">E</text><text x="3" y="22">T</text><text x="13" y="28">T</text><text x="23" y="24">!</text></g></svg>
+            <span><b>Matrix Mode</b><small>Type ur own secret message</small></span>
+          </a>
+          <button type="button" class="btn98 game is-disabled" aria-disabled="true">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" fill="#bbb"/><path d="M8 24 L24 8" stroke="#777" stroke-width="3"/></svg>
+            <span><b>Whack-a-Brett</b><small>coming soon <span class="new">NEW!</span></small></span>
+          </button>
+          <button type="button" class="btn98 game is-disabled" aria-disabled="true">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" fill="#bbb"/><path d="M8 24 L24 8" stroke="#777" stroke-width="3"/></svg>
+            <span><b>Flappy Brett</b><small>coming soon</small></span>
+          </button>
         </div>
+      </div>
+      <div class="win__status" aria-hidden="true"><span>6 object(s)</span><span>Brett's Computer</span></div>
+    </section>
 
-        <div id="games-page" class="page">
-            <canvas id="matrix-canvas"></canvas>
-            <button id="matrix-back-btn" class="absolute top-4 left-4 z-30 text-white bg-black bg-opacity-50 p-2 rounded-full hidden back-to-menu-btn">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            </button>
+    <!-- ===== facts ===== -->
+    <section class="box box--facts" id="facts" aria-labelledby="facts-h">
+      <h2 id="facts-h" class="box__title">&#11088; Brett Facts &#11088;</h2>
+      <ol class="facts">
+        <li>Brett can close incognito tabs faster than an F1 driver reacts to the lights going out.</li>
+        <li>Brett changes the playlist from Ariana Grande to Joe Rogan when the boys get in the car. We all saw it, Brett.</li>
+        <li>Brett has never once avoided gay stuff. That's Carson's job.</li>
+        <li><i>Got a Brett fact? Send it in! &darr;</i></li>
+      </ol>
+    </section>
 
-            <div id="matrix-controls">
-                <label for="matrix-phrase-input" class="text-[#0F0] font-mono text-sm opacity-80 uppercase tracking-widest">System Override</label>
-                <input type="text" id="matrix-phrase-input" value="BRETT IS GAY" placeholder="Type to change the code..." autocomplete="off" spellcheck="false">
-                <button id="matrix-mode-toggle">Enable Classic Matrix</button>
-                <div class="matrix-slider-container">
-                    <span class="text-[#0F0] font-mono text-[10px] opacity-80 uppercase">Speed:</span>
-                    <input type="range" id="matrix-speed-slider" min="10" max="60" value="45">
-                </div>
-                <div class="text-[#0F0] font-mono text-[10px] opacity-60 mt-1">(Tap background to hide/show)</div>
-            </div>
+    <!-- ===== help / photos ===== -->
+    <section class="box box--help" aria-labelledby="help-h">
+      <h2 id="help-h" class="box__title"><span class="blink" aria-hidden="true">!!!</span> I NEED YOUR HELP <span class="blink" aria-hidden="true">!!!</span></h2>
+      <p>This website is only the beginning. Please send your GAY photos of Brett to:</p>
+      <p class="email"><a class="btn98" id="mail" href="#help-h">brettisgaydotcom [at] gmail [dot] com</a></p>
+      <p class="merch"><span class="new">NEW!</span> <b>MERCH COMING SOON!</b> T-shirts, mugs, mousepads (maybe)</p>
+    </section>
 
-            <div id="game-selection-menu" class="w-full h-full flex flex-col items-center justify-center space-y-6 p-4">
-                 <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 text-center" style="font-family: 'Press Start 2P', cursive;">SELECT GAME</h1>
-                 <button data-game="f1-reaction" class="game-select-btn w-[280px] text-xl bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">F1 Reaction</button>
-                 <button data-game="breakout" class="game-select-btn w-[280px] text-xl bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Breakout Deluxe</button>
-                 <button data-game="connect-four" class="game-select-btn w-[280px] text-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Connect Four</button>
-                 <button data-game="matrix-mode" class="game-select-btn w-[280px] text-xl bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Matrix Mode</button>
-            </div>
+    <!-- ===== guestbook (static mock for now; a real one is a later upgrade) ===== -->
+    <section class="box box--guest" id="guestbook" aria-labelledby="guest-h">
+      <h2 id="guest-h" class="box__title">&#128214; Sign my Guestbook!!! &#128214;</h2>
+      <form class="gb-form" id="gbForm" novalidate>
+        <p class="gb-uc"><b>&#128679; Guestbook under construction!</b> Signing doesn't save yet. The entries below are just samples.</p>
+        <label>Name: <input type="text" name="name" autocomplete="nickname" placeholder="xX_ur_name_Xx" maxlength="40"></label>
+        <label>Message: <textarea name="msg" rows="3" placeholder="Brett rulez!!!" maxlength="300"></textarea></label>
+        <button class="btn98" type="submit">Sign Guestbook</button>
+        <p class="small" id="gbNote" role="status"></p>
+      </form>
+      <ul class="gb" aria-label="Sample guestbook entries">
+        <li><b>~*Carson*~</b> <i>wrote:</i> For the record I was NOT avoiding anything.</li>
+        <li><b>Anonymous</b> <i>wrote:</i> Beat Breakout on level 10. Took me all weekend. 10/10.</li>
+        <li><b>Brett</b> <i>wrote:</i> I'm putting this on my resume.</li>
+      </ul>
+    </section>
 
-            <div id="f1-reaction-container" class="game-container hidden w-full h-full bg-[#111827] flex-col items-center justify-between py-10 md:py-16 text-white relative">
-                <button class="absolute top-4 left-4 z-50 text-white bg-black bg-opacity-50 p-2 rounded-full back-to-menu-btn">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                
-                <div class="text-center pointer-events-none px-4 flex-shrink-0 mt-8">
-                    <h1 class="text-3xl md:text-5xl font-black uppercase tracking-wider text-gray-200 italic">Reaction Test</h1>
-                    <p class="text-gray-400 mt-2">Wait for the lights to go out...</p>
-                </div>
+  </main>
 
-                <div class="flex gap-1.5 md:gap-4 p-3 md:p-4 bg-gray-900 rounded-xl shadow-2xl border border-gray-700 pointer-events-none my-auto" id="light-rig">
-                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-1-a"></div><div class="light" id="light-1-b"></div></div>
-                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-2-a"></div><div class="light" id="light-2-b"></div></div>
-                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-3-a"></div><div class="light" id="light-3-b"></div></div>
-                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-4-a"></div><div class="light" id="light-4-b"></div></div>
-                    <div class="light-box flex flex-col rounded-lg"><div class="light" id="light-5-a"></div><div class="light" id="light-5-b"></div></div>
-                </div>
-
-                <div class="flex flex-col items-center pointer-events-none w-full px-4 text-center flex-shrink-0 min-h-[160px] mb-8">
-                    <h2 id="f1-status-text" class="text-2xl md:text-4xl font-bold mb-2 animate-pulse">Tap anywhere to start</h2>
-                    <p id="f1-time-display" class="text-5xl md:text-7xl font-black text-red-500 hidden font-mono">0.000s</p>
-                    <p id="f1-comparison-text" class="text-lg md:text-2xl text-gray-300 mt-2 h-16 max-w-2xl px-2"></p>
-                </div>
-
-                <div id="f1-result-modal" class="absolute inset-0 bg-gray-900 bg-opacity-95 z-40 hidden flex-col items-center justify-center p-4">
-                    <h2 id="f1-modal-title"></h2>
-                    <p id="f1-modal-time"></p>
-                    <p id="f1-modal-desc"></p>
-                    <button id="f1-modal-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-transform transform hover:scale-105">Play Again</button>
-                </div>
-            </div>
-
-            <div id="breakout-game-container" class="game-container hidden w-full h-full">
-                 <button class="absolute top-2 left-2 z-50 text-white bg-black bg-opacity-50 p-2 rounded-full back-to-menu-btn">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                 </button>
-                 <div id="game-wrapper">
-                     <div id="game-container">
-                         <canvas id="breakoutCanvas"></canvas>
-                         <div id="ui-overlay">
-                             <div id="score">SCORE: 0</div>
-                             <div id="level-display">LEVEL: 1</div>
-                             <div id="lives">LIVES: 3</div>
-                         </div>
-                         <div id="modal">
-                             <h2 id="modal-text">BREAKOUT</h2>
-                             <p id="modal-subtitle">Deluxe Edition</p>
-                             <button id="start-btn">START GAME</button>
-                         </div>
-                     </div>
-                 </div>
-            </div>
-
-            <div id="connect-four-container" class="game-container hidden w-full h-full">
-                 <button class="absolute top-2 left-2 z-50 text-black bg-white bg-opacity-50 p-2 rounded-full back-to-menu-btn">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                 </button>
-                 <div class="w-full max-w-lg text-center mb-4">
-                     <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">Connect Four vs. AI</h1>
-                     <div id="status" class="text-lg md:text-xl h-8 font-semibold transition-colors duration-300 text-gray-800">Your Turn (Red)</div>
-                 </div>
-                 <div id="board-container">
-                     <div class="board" id="board"></div>
-                     <div id="column-selectors"></div>
-                 </div>
-                 <button id="newGame" class="mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200">New Game</button>
-            </div>
-        </div>
+  <!-- ===== webring ===== -->
+  <nav class="webring" aria-label="Webring">
+    <p class="webring__name">&#127760; This site is a proud member of the <b>Cousins of the Web</b> webring &#127760;</p>
+    <div class="webring__btns">
+      <a class="btn98" href="#top" title="Previous site">&laquo; Prev</a>
+      <a class="btn98" href="games/f1-reaction/" id="ringRandom" title="Random game">Random</a>
+      <a class="btn98" href="#top" title="Next site">Next &raquo;</a>
     </div>
-
-    <div id="winnerModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center transform transition-all scale-95 opacity-0">
-            <h2 id="winnerText" class="text-3xl font-bold mb-4"></h2>
-            <button id="playAgain" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Play Again</button>
-        </div>
-    </div>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around h-16 z-20">
-        <button data-page="feed-page" class="nav-button flex-1 flex flex-col items-center justify-center text-sm text-blue-500">
-            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-            Feed
-        </button>
-        <button data-page="games-page" class="nav-button flex-1 flex flex-col items-center justify-center text-sm text-gray-500">
-            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V5a1 1 0 00-1.447-.894l-4 2A1 1 0 0011 7v10zM4 17a1 1 0 001.447.894l4-2A1 1 0 0010 15V5a1 1 0 00-1.447-.894l-4 2A1 1 0 004 7v10z"></path></svg>
-            Games
-        </button>
-    </nav>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // --- ELEMENTS ---
-            const transitionScreen = document.getElementById('transition-screen');
-            const navButtons = document.querySelectorAll('.nav-button');
-            const pages = document.querySelectorAll('.page');
-            let activeGameLoop = null;
-
-            // --- INITIAL LOAD TRANSITION ---
-            setTimeout(() => {
-                transitionScreen.style.opacity = '0';
-                transitionScreen.addEventListener('transitionend', () => {
-                    transitionScreen.style.display = 'none';
-                }, { once: true });
-            }, 3000); 
-
-            // --- MASTER PAGE NAVIGATION ---
-            function showPage(pageId) {
-                const currentPage = document.querySelector('.page.active');
-                if (currentPage && currentPage.id === pageId) {
-                    return; 
-                }
-
-                if (activeGameLoop) {
-                    cancelAnimationFrame(activeGameLoop);
-                    activeGameLoop = null;
-                }
-
-                pages.forEach(page => page.classList.remove('active'));
-                
-                const targetPage = document.getElementById(pageId);
-                if (targetPage) {
-                    targetPage.classList.add('active');
-                } else {
-                    document.getElementById('feed-page').classList.add('active');
-                    pageId = 'feed-page';
-                }
-
-                navButtons.forEach(button => {
-                    const isSelected = button.dataset.page === pageId;
-                    button.classList.toggle('text-blue-500', isSelected);
-                    button.classList.toggle('text-gray-500', !isSelected);
-                });
-
-                localStorage.setItem('lastActivePage', pageId);
-
-                if (pageId === 'games-page') {
-                    showGameSelection();
-                }
-            }
-
-            navButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    showPage(button.dataset.page);
-                });
-            });
-
-            // --- FEED APP INITIALIZATION ---
-            function initFeedApp() {
-                const feedContainer = document.getElementById('feed-container');
-                
-                const photoData = [
-                    { imageUrl: 'images/intro_brett.jpg', caption: 'This is Brett' },
-                    { imageUrl: 'images/brett carson 1.jpg', caption: 'Brett, Gay. Carson, avoiding Gay stuff' },
-                    { imageUrl: 'images/Brett kissin a gay dude.jpg', caption: 'Mega Gay!' },
-                    { imageUrl: 'images/brett carson 2.jpg', caption: 'Super Gay!' },
-                    { imageUrl: 'images/gay field.jpg', caption: 'Gay!' },
-                    { imageUrl: 'images/carson gay.jpg', caption: 'Dont do it Carson!' }
-                ];
-
-                function renderFeed() {
-                    if (!feedContainer) return;
-                    feedContainer.innerHTML = '';
-                    photoData.forEach(post => {
-                        const postElement = createPostElement(post);
-                        feedContainer.appendChild(postElement);
-                    });
-                }
-
-                function createPostElement(post) {
-                    const article = document.createElement('article');
-                    article.className = 'post-card';
-                    
-                    const rotation = Math.random() * 8 - 4; 
-                    article.style.transform = `rotate(${rotation}deg)`;
-
-                    const image = `<img src="${post.imageUrl}" alt="${post.caption}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/ccc/ffffff?text=Image+Not+Found';">`;
-                    const caption = `<p class="caption">${post.caption}</p>`;
-                    
-                    article.innerHTML = image + caption;
-                    return article;
-                }
-                
-                renderFeed();
-            }
-
-            // --- GAMES APP LOGIC ---
-            const gameSelectionMenu = document.getElementById('game-selection-menu');
-            const gameSelectBtns = document.querySelectorAll('.game-select-btn');
-            const gameContainers = document.querySelectorAll('.game-container');
-            const backToMenuBtns = document.querySelectorAll('.back-to-menu-btn');
-            const matrixCanvas = document.getElementById('matrix-canvas');
-            const matrixBackBtn = document.getElementById('matrix-back-btn');
-
-            function showGameSelection() {
-                if (activeGameLoop) {
-                    cancelAnimationFrame(activeGameLoop);
-                    activeGameLoop = null;
-                }
-                // Stop F1 timer if they back out early
-                if (window.resetF1Game) window.resetF1Game();
-
-                gameSelectionMenu.style.display = 'flex';
-                gameContainers.forEach(c => c.classList.add('hidden'));
-                matrixCanvas.classList.remove('fullscreen');
-                matrixCanvas.style.display = 'block';
-                matrixBackBtn.classList.add('hidden');
-                
-                const controls = document.getElementById('matrix-controls');
-                if (controls) controls.style.display = 'none';
-
-                initMatrixRain(); 
-            }
-
-            function showGame(gameName) {
-                if (activeGameLoop) {
-                    cancelAnimationFrame(activeGameLoop);
-                    activeGameLoop = null;
-                }
-                gameSelectionMenu.style.display = 'none';
-                matrixCanvas.style.display = 'none'; 
-                matrixBackBtn.classList.add('hidden');
-                
-                const controls = document.getElementById('matrix-controls');
-                if (controls) controls.style.display = 'none';
-
-                gameContainers.forEach(c => {
-                    c.classList.toggle('hidden', c.id !== `${gameName}-container`);
-                    c.classList.toggle('flex', c.id === `${gameName}-container`);
-                });
-                
-                if (gameName === 'breakout-game') {
-                    initBreakoutGame();
-                } else if (gameName === 'connect-four') {
-                    initConnectFourGame();
-                } else if (gameName === 'f1-reaction') {
-                    initF1ReactionGame();
-                }
-            }
-            
-            function showMatrixMode() {
-                if (activeGameLoop) { 
-                    cancelAnimationFrame(activeGameLoop);
-                    activeGameLoop = null;
-                }
-                gameSelectionMenu.style.display = 'none';
-                gameContainers.forEach(c => c.classList.add('hidden'));
-                matrixCanvas.style.display = 'block';
-                matrixCanvas.classList.add('fullscreen');
-                matrixBackBtn.classList.remove('hidden');
-                
-                const controls = document.getElementById('matrix-controls');
-                if (controls) {
-                    controls.style.display = 'flex';
-                    controls.classList.remove('hidden-ui');
-                }
-
-                initMatrixRain(); 
-            }
-
-            gameSelectBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const game = btn.dataset.game;
-                    if (game === 'f1-reaction') {
-                        showGame('f1-reaction');
-                    } else if (game === 'breakout') {
-                        showGame('breakout-game');
-                    } else if (game === 'connect-four') {
-                        showGame('connect-four');
-                    } else if (game === 'matrix-mode') {
-                        showMatrixMode();
-                    }
-                });
-            });
-            
-            backToMenuBtns.forEach(btn => {
-                btn.addEventListener('click', showGameSelection);
-            });
-            matrixBackBtn.addEventListener('click', showGameSelection);
-
-
-            // --- F1 REACTION GAME INITIALIZATION ---
-          let f1Initialized = false;
-            function initF1ReactionGame() {
-                if (f1Initialized) {
-                    window.resetF1Game();
-                    return;
-                }
-
-                let f1GameState = 'WAITING';
-                let f1StartTime = 0;
-                let f1TimeoutIds = [];
-                
-                const f1Container = document.getElementById('f1-reaction-container');
-                const f1StatusText = document.getElementById('f1-status-text');
-                
-                // New Modal Elements
-                const f1Modal = document.getElementById('f1-result-modal');
-                const f1ModalTitle = document.getElementById('f1-modal-title');
-                const f1ModalTime = document.getElementById('f1-modal-time');
-                const f1ModalDesc = document.getElementById('f1-modal-desc');
-                const f1ModalBtn = document.getElementById('f1-modal-btn');
-                
-                // Force container to be relative so the modal covers it perfectly
-                f1Container.classList.add('relative', 'overflow-hidden');
-                
-                const f1Ranks = [
-                    { threshold: 100, text: "False Start! Pure luck. Humans physically can't react in under 100ms!", color: "text-red-500" },
-                    { threshold: 150, text: "Faster than Brett closing his incognito tabs when someone walks in.", color: "text-yellow-400" },
-                    { threshold: 200, text: "Faster than Brett changing the playlist from Ariana Grande to Joe Rogan when the boys get in the car.", color: "text-yellow-400" },
-                    { threshold: 250, text: "Elite! Professional F1 Driver.", color: "text-green-400" },
-                    { threshold: 300, text: "Great! Olympic Sprinter off the blocks.", color: "text-blue-400" },
-                    { threshold: 400, text: "Fast! A cheetah pouncing on its prey.", color: "text-white" },
-                    { threshold: 600, text: "Average. You have the reflexes of a house cat.", color: "text-gray-400" },
-                    { threshold: 1000, text: "Sluggish. Slower than a Galapagos tortoise.", color: "text-gray-500" },
-                    { threshold: Infinity, text: "Glacial. You're a three-toed sloth.", color: "text-gray-700" }
-                ];
-
-                function turnOnLight(index) {
-                    document.getElementById(`light-${index}-a`).classList.add('on');
-                    document.getElementById(`light-${index}-b`).classList.add('on');
-                }
-
-                function turnOffAllLights() {
-                    for (let i = 1; i <= 5; i++) {
-                        document.getElementById(`light-${i}-a`).classList.remove('on');
-                        document.getElementById(`light-${i}-b`).classList.remove('on');
-                    }
-                }
-
-                function clearAllTimeouts() {
-                    f1TimeoutIds.forEach(id => clearTimeout(id));
-                    f1TimeoutIds = [];
-                }
-
-                window.resetF1Game = function() {
-                    f1GameState = 'WAITING';
-                    clearAllTimeouts();
-                    turnOffAllLights();
-                    f1StatusText.innerText = "Tap anywhere to start";
-                    f1StatusText.className = "text-2xl md:text-4xl font-bold mb-2 animate-pulse text-white";
-                    f1StatusText.classList.remove('hidden');
-                    
-                    // Hide the popup modal on reset
-                    f1Modal.classList.add('hidden');
-                    f1Modal.classList.remove('flex');
-                };
-
-                function startF1Game() {
-                    f1GameState = 'STARTING';
-                    f1StatusText.classList.add('hidden');
-                    f1Modal.classList.add('hidden');
-                    f1Modal.classList.remove('flex');
-                    turnOffAllLights();
-                    clearAllTimeouts();
-
-                    for (let i = 1; i <= 5; i++) {
-                        let id = setTimeout(() => {
-                            turnOnLight(i);
-                            if (i === 5) {
-                                f1GameState = 'READY';
-                                let holdTime = Math.random() * 4000 + 200;
-                                
-                                let goId = setTimeout(() => {
-                                    turnOffAllLights();
-                                    f1GameState = 'GO';
-                                    f1StartTime = performance.now();
-                                }, holdTime);
-                                f1TimeoutIds.push(goId);
-                            }
-                        }, i * 1000);
-                        f1TimeoutIds.push(id);
-                    }
-                }
-
-                function handleF1Tap(e) {
-                    if (e.target.closest('button')) return; // ignore UI button taps
-                    if (e.target.closest('#f1-result-modal')) return; // ignore taps on the modal background
-
-                    if (f1GameState === 'WAITING') {
-                        startF1Game();
-                    } 
-                    else if (f1GameState === 'STARTING' || f1GameState === 'READY') {
-                        f1GameState = 'FALSE_START';
-                        clearAllTimeouts();
-                        turnOffAllLights();
-                        
-                        // Trigger Pop-Up for Jump Start
-                        f1ModalTitle.innerText = "JUMPED THE GUN!";
-                        f1ModalTitle.className = "text-3xl md:text-4xl font-black mb-2 text-red-500 uppercase tracking-wider";
-                        f1ModalTime.innerText = "---";
-                        f1ModalTime.className = "text-5xl md:text-6xl font-mono font-bold text-red-500 mb-4";
-                        f1ModalDesc.innerText = "You tapped before the lights went out.";
-                        f1ModalDesc.className = "text-lg md:text-xl text-gray-300 mb-8 min-h-[4rem] flex items-center justify-center font-semibold";
-                        f1Modal.classList.remove('hidden');
-                        f1Modal.classList.add('flex');
-                    } 
-                    else if (f1GameState === 'GO') {
-                        let endTime = performance.now();
-                        let reactionTimeMs = endTime - f1StartTime;
-                        f1GameState = 'FINISHED';
-                        showF1Results(reactionTimeMs);
-                    }
-                    // Note: If state is FINISHED, tapping the background does nothing.
-                }
-
-                function showF1Results(timeMs) {
-                    let seconds = (timeMs / 1000).toFixed(3);
-                    let rank = f1Ranks.find(r => timeMs <= r.threshold);
-                    
-                    // Trigger Pop-Up for Real Score
-                    f1ModalTitle.innerText = "REACTION TIME";
-                    f1ModalTitle.className = "text-3xl md:text-4xl font-black mb-2 text-white uppercase tracking-wider";
-                    f1ModalTime.innerText = seconds + "s";
-                    f1ModalTime.className = "text-5xl md:text-6xl font-mono font-bold text-yellow-400 mb-4";
-                    f1ModalDesc.innerText = rank.text;
-                    f1ModalDesc.className = `text-lg md:text-xl mb-8 min-h-[4rem] flex items-center text-center justify-center font-semibold ${rank.color}`;
-                    
-                    f1Modal.classList.remove('hidden');
-                    f1Modal.classList.add('flex');
-                }
-
-                // Restart game when they click the Pop-Up button
-                f1ModalBtn.addEventListener('click', () => {
-                    window.resetF1Game();
-                });
-
-                f1Container.addEventListener('pointerdown', (e) => {
-                    if (!e.target.closest('button') && !e.target.closest('#f1-result-modal')) {
-                        e.preventDefault(); 
-                        handleF1Tap(e);
-                    }
-                });
-
-                // Prevent Spacebar from restarting if the modal is open
-                document.addEventListener('keydown', (e) => {
-                    if (e.code === 'Space' && !f1Container.classList.contains('hidden') && f1Modal.classList.contains('hidden')) {
-                        e.preventDefault(); 
-                        handleF1Tap(e);
-                    }
-                });
-
-                f1Initialized = true;
-                window.resetF1Game();
-            }
-            
-            // --- MATRIX RAIN INITIALIZATION ---
-            let matrixInitialized = false;
-            let matrixPhraseText = "BRETT IS GAY   ";
-            let isClassicMode = false;
-            let matrixFps = 45;
-            let matrixInterval = 1000 / matrixFps;
-            let matrixThen = Date.now();
-            let matrixRainDrops = [];
-            const classicChars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
-
-            function initMatrixRain() {
-                const canvas = document.getElementById('matrix-canvas');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const input = document.getElementById('matrix-phrase-input');
-                const controls = document.getElementById('matrix-controls');
-                const modeToggle = document.getElementById('matrix-mode-toggle');
-                const speedSlider = document.getElementById('matrix-speed-slider');
-                
-                const fontSize = 16;
-                let columns;
-
-                if (!matrixInitialized) {
-                    // Setup Event Listeners only once
-                    input.addEventListener('input', (e) => {
-                        const val = e.target.value;
-                        matrixPhraseText = (val.length > 0 ? val : ' ') + "   ";
-                        
-                        for(let i = 0; i < matrixRainDrops.length; i++) {
-                            if (matrixRainDrops[i] && matrixRainDrops[i].charIndex >= matrixPhraseText.length) {
-                                matrixRainDrops[i].charIndex = Math.floor(Math.random() * matrixPhraseText.length);
-                            }
-                        }
-                    });
-
-                    modeToggle.addEventListener('click', () => {
-                        isClassicMode = !isClassicMode;
-                        if (isClassicMode) {
-                            modeToggle.innerText = 'Switch to Custom Text';
-                            input.style.display = 'none';
-                            
-                            for(let i = 0; i < matrixRainDrops.length; i++) {
-                                matrixRainDrops[i].y = Math.random() * (canvas.height / fontSize);
-                                matrixRainDrops[i].isBrettCol = Math.random() < 0.04;
-                                if (matrixRainDrops[i].isBrettCol) {
-                                    matrixRainDrops[i].charIndex = 0;
-                                }
-                            }
-                        } else {
-                            modeToggle.innerText = 'Enable Classic Matrix';
-                            input.style.display = 'block';
-                        }
-                    });
-
-                    speedSlider.addEventListener('input', (e) => {
-                        matrixFps = parseInt(e.target.value, 10);
-                        matrixInterval = 1000 / matrixFps;
-                    });
-
-                    controls.addEventListener('click', (e) => {
-                        e.stopPropagation(); // prevent UI tap from hiding UI
-                    });
-
-                    canvas.addEventListener('click', () => {
-                        // Only toggle UI if we are in full screen matrix mode
-                        if (canvas.classList.contains('fullscreen')) {
-                            controls.classList.toggle('hidden-ui');
-                            if (controls.classList.contains('hidden-ui')) {
-                                input.blur();
-                            }
-                        }
-                    });
-
-                    const resizeCanvas = () => {
-                        canvas.width = window.innerWidth;
-                        canvas.height = window.innerHeight;
-                        columns = Math.floor(canvas.width / fontSize);
-                        
-                        let newRainDrops = [];
-                        for(let i = 0; i < columns; i++) {
-                            if (matrixRainDrops[i]) {
-                                newRainDrops[i] = matrixRainDrops[i];
-                            } else {
-                                let isBrett = Math.random() < 0.04;
-                                newRainDrops[i] = {
-                                    y: Math.random() * (canvas.height / fontSize), 
-                                    charIndex: isBrett ? 0 : Math.floor(Math.random() * matrixPhraseText.length),
-                                    isBrettCol: isBrett
-                                };
-                            }
-                        }
-                        matrixRainDrops = newRainDrops;
-                    };
-                    
-                    window.addEventListener('resize', resizeCanvas);
-                    matrixInitialized = true;
-                }
-
-                // Initial setup on function call (resets drops for new screen or page load)
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                columns = Math.floor(canvas.width / fontSize);
-                matrixRainDrops = [];
-                for(let i = 0; i < columns; i++) {
-                    let isBrett = Math.random() < 0.04;
-                    matrixRainDrops[i] = {
-                        y: Math.random() * (canvas.height / fontSize), 
-                        charIndex: isBrett ? 0 : Math.floor(Math.random() * matrixPhraseText.length),
-                        isBrettCol: isBrett
-                    };
-                }
-
-                function drawMatrix() {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    ctx.font = fontSize + 'px monospace';
-                    const brettPhrase = "BRETT IS GAY   ";
-
-                    for(let i = 0; i < matrixRainDrops.length; i++) {
-                        let text, prevText;
-
-                        if (isClassicMode) {
-                            if (matrixRainDrops[i].isBrettCol) {
-                                // Secretly spell out BRETT IS GAY on these specific columns
-                                if (matrixRainDrops[i].charIndex >= brettPhrase.length) {
-                                    matrixRainDrops[i].charIndex = 0;
-                                }
-                                text = brettPhrase.charAt(matrixRainDrops[i].charIndex);
-                                
-                                let prevIndex = matrixRainDrops[i].charIndex - 1;
-                                if (prevIndex < 0) prevIndex = brettPhrase.length - 1;
-                                prevText = brettPhrase.charAt(prevIndex);
-
-                                matrixRainDrops[i].charIndex = (matrixRainDrops[i].charIndex + 1) % brettPhrase.length;
-                            } else {
-                                // Standard classic flickering characters for the rest
-                                text = classicChars.charAt(Math.floor(Math.random() * classicChars.length));
-                                prevText = classicChars.charAt(Math.floor(Math.random() * classicChars.length));
-                            }
-                        } else {
-                            if (matrixRainDrops[i].charIndex >= matrixPhraseText.length) {
-                                matrixRainDrops[i].charIndex = 0;
-                            }
-                            text = matrixPhraseText.charAt(matrixRainDrops[i].charIndex);
-                            
-                            let prevIndex = matrixRainDrops[i].charIndex - 1;
-                            if (prevIndex < 0) prevIndex = matrixPhraseText.length - 1;
-                            prevText = matrixPhraseText.charAt(prevIndex);
-
-                            matrixRainDrops[i].charIndex = (matrixRainDrops[i].charIndex + 1) % matrixPhraseText.length;
-                        }
-                        
-                        // 1. Draw the PREVIOUS character in solid GREEN
-                        if (prevText !== ' ') {
-                            ctx.fillStyle = '#0F0';
-                            ctx.fillText(prevText, i * fontSize, (matrixRainDrops[i].y - 1) * fontSize);
-                        }
-
-                        // 2. Draw the CURRENT character in a soft whitish-green
-                        if (text !== ' ') {
-                            ctx.fillStyle = '#CEFFCE';
-                            ctx.shadowBlur = 4;
-                            ctx.shadowColor = '#0F0';
-                            ctx.fillText(text, i * fontSize, matrixRainDrops[i].y * fontSize);
-                            ctx.shadowBlur = 0;
-                        }
-                        
-                        if(matrixRainDrops[i].y * fontSize > canvas.height && Math.random() > 0.975){
-                            matrixRainDrops[i].y = 0;
-                            if (!isClassicMode) {
-                                matrixRainDrops[i].charIndex = Math.floor(Math.random() * matrixPhraseText.length);
-                            } else {
-                                // Re-roll the Easter egg chance for this specific drop!
-                                matrixRainDrops[i].isBrettCol = Math.random() < 0.04;
-                                if (matrixRainDrops[i].isBrettCol) {
-                                    matrixRainDrops[i].charIndex = 0;
-                                }
-                            }
-                        }
-
-                        matrixRainDrops[i].y++;
-                    }
-                }
-
-                matrixThen = Date.now();
-                function animateMatrix() {
-                    activeGameLoop = requestAnimationFrame(animateMatrix);
-                    
-                    let now = Date.now();
-                    let delta = now - matrixThen;
-                    
-                    if (delta > matrixInterval) {
-                        matrixThen = now - (delta % matrixInterval);
-                        drawMatrix();
-                    }
-                }
-                
-                if (activeGameLoop) cancelAnimationFrame(activeGameLoop);
-                animateMatrix();
-            }
-
-            // --- BREAKOUT GAME INITIALIZATION ---
-            function initBreakoutGame() {
-                const canvas = document.getElementById('breakoutCanvas');
-                const ctx = canvas.getContext('2d');
-                const scoreEl = document.getElementById('score');
-                const livesEl = document.getElementById('lives');
-                const levelEl = document.getElementById('level-display');
-                const modal = document.getElementById('modal');
-                const modalText = document.getElementById('modal-text');
-                const modalSubtitle = document.getElementById('modal-subtitle');
-                const startBtn = document.getElementById('start-btn');
-
-                let score = 0, lives = 3, level = 1;
-                let gameState = 'start-screen';
-                let levelTransitionEndTime = 0;
-                const baseWidth = 480, baseHeight = 640;
-                let scale = 1;
-                let extraLifeDroppedThisLevel = false;
-                let lifeLostThisLevel = false;
-                let hasUsedExtraLifeChance = false;
-
-                let powerUpState = { isFireballShooter: false, fireballShooterEndTime: 0, nextFireballTime: 0, isBallShooter: false, ballShooterEndTime: 0, nextBallTime: 0, isFastBall: false, fastBallEndTime: 0 };
-                let balls = [], bricks = [], powerUps = [], fireballs = [];
-                const paddle = { x: 0, y: 0, width: 100, height: 10, color: '#FF00FF', baseWidth: 100 };
-                const enemyAIPaddle = { x: 0, y: 0, width: 100, height: 10, color: '#FF4500', active: false };
-                const cornerBumperSize = 30;
-                const brickInfo = { rowCount: 7, columnCount: 7, width: 55, height: 20, padding: 10, offsetTop: 50 };
-                const brickColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
-                const multiHitColors = { 3: '#FFD700', 2: '#C0C0C0', 1: '#CD7F32' };
-
-                let synth, metalSynth, brickHitSynth, brickBreakSynth, megatronSynth, audioInitialized = false;
-                let lastSoundTime = 0;
-
-                function playSoundSafe(synth, ...args) {
-                    if (!audioInitialized || !synth) return;
-                    try {
-                        let time = Tone.now();
-                        if (time <= lastSoundTime) {
-                            time = lastSoundTime + 0.05; 
-                        }
-                        synth.triggerAttackRelease(...args, time);
-                        lastSoundTime = time;
-                    } catch (e) {
-                        // Fail silently 
-                    }
-                }
-
-                function initAudio() {
-                    if (audioInitialized) return;
-                    try {
-                        if (Tone.context.state !== 'running') { Tone.start(); }
-                        synth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.2 } }).toDestination();
-                        metalSynth = new Tone.MetalSynth({ frequency: 100, envelope: { attack: 0.01, decay: 0.2, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination();
-                        brickHitSynth = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1 } }).toDestination();
-                        brickBreakSynth = new Tone.NoiseSynth({ noise: { type: 'brown' }, volume: -12, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination();
-                        megatronSynth = new Tone.FMSynth({ harmonicity: 3, modulationIndex: 14, detune: 0, oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.4 }, modulation: { type: 'sine' }, modulationEnvelope: { attack: 0.05, decay: 0.1, sustain: 0.8, release: 0.4 } }).toDestination();
-                        audioInitialized = true;
-                        lastSoundTime = 0;
-                    } catch (e) { console.error("Could not initialize audio:", e); }
-                }
-
-                function resizeAndScale() {
-                    const { width, height } = canvas.getBoundingClientRect();
-                    canvas.width = width; canvas.height = height;
-                    scale = Math.min(width / baseWidth, height / baseHeight);
-                    paddle.width = paddle.baseWidth * scale;
-                    paddle.height = 10 * scale;
-                    enemyAIPaddle.width = 100 * scale;
-                    enemyAIPaddle.height = 10 * scale;
-                    brickInfo.width = 55 * scale;
-                    brickInfo.height = 20 * scale;
-                    brickInfo.padding = 10 * scale;
-                    brickInfo.offsetTop = 60 * scale;
-                    brickInfo.offsetLeft = (canvas.width - (brickInfo.columnCount * (brickInfo.width + brickInfo.padding) - brickInfo.padding)) / 2;
-                    paddle.y = canvas.height - 30 * scale;
-                    enemyAIPaddle.y = canvas.height / 3;
-                }
-
-                function createBricks(currentLevel) {
-                    bricks = [];
-                    const layouts = [
-                        (c, r) => ({ health: 1, color: brickColors[r] }),
-                        (c, r) => { if (r >= 3 && c >= r - 3 && c <= 9 - r) { const health = (r === 3 || c === r - 3 || c === 9 - r) ? 2 : 1; return { health, color: health === 2 ? multiHitColors[2] : brickColors[r] }; } return null; },
-                        (c, r) => { if ((c + r) % 2 === 0) { const health = (c > 1 && c < 5 && r > 1 && r < 5) ? 3 : 1; return { health, color: health === 3 ? multiHitColors[3] : brickColors[r] }; } return null; },
-                        (c, r) => { if (c === 0 || c === 6 || r === 0 || r === 6) return { health: 2, color: multiHitColors[2] }; if (c === 1 || c === 5 || r === 1 || r === 5) return { health: 1, color: brickColors[r] }; if (c > 1 && c < 5 && r > 1 && r < 5) return { health: 3, color: multiHitColors[3] }; return null; },
-                        (c, r) => { if (c % 2 === 0) { const health = r < 2 ? 2 : 1; return { health, color: health === 2 ? multiHitColors[2] : brickColors[r] }; } return null; },
-                        (c, r) => { if ((r === 1 || r === 2) && (c === 1 || c === 5)) return { health: 2, color: multiHitColors[2] }; if (r === 4 && c > 0 && c < 6) return { health: 1, color: brickColors[1] }; if (r === 5 && (c === 1 || c === 5)) return { health: 1, color: brickColors[1] }; return null; },
-                        (c, r) => { if (c === 0 || c === 6 || r === 0) return { health: 3, color: multiHitColors[3] }; if (r > 2 && (c === 2 || c === 4)) return { health: 2, color: multiHitColors[2] }; if (r === 4 && c === 3) return { health: 1, color: brickColors[0] }; return null; },
-                        (c, r) => { if ((c === 1 && r === 1) || (c === 5 && r === 1) || (c === 3 && r === 4) || (c === 1 && r === 6) || (c === 5 && r === 6)) return { health: 3, color: multiHitColors[3] }; return null; },
-                        (c, r) => { const health = (c + r) % 2 === 0 ? 3 : 1; return { health, color: health === 3 ? multiHitColors[3] : brickColors[r] }; },
-                        (c, r) => ({ health: 3, color: multiHitColors[3] })
-                    ];
-                    const layoutFunc = layouts[Math.min(currentLevel - 1, layouts.length - 1)];
-                    for (let c = 0; c < brickInfo.columnCount; c++) {
-                        bricks[c] = [];
-                        for (let r = 0; r < brickInfo.rowCount; r++) {
-                            const brickProps = layoutFunc(c, r);
-                            if (brickProps) {
-                                const brickX = c * (brickInfo.width + brickInfo.padding) + brickInfo.offsetLeft;
-                                const brickY = r * (brickInfo.height + brickInfo.padding) + brickInfo.offsetTop;
-                                bricks[c][r] = { x: brickX, y: brickY, status: 1, initialHealth: brickProps.health, ...brickProps };
-                            } else {
-                                bricks[c][r] = { status: 0 };
-                            }
-                        }
-                    }
-                }
-
-                function createBall(x, y, dx, dy, type = 'normal') {
-                    let newBall = { x, y, radius: 8 * scale, dx: dx * scale, dy: dy * scale, type, isFast: false };
-                    if (powerUpState.isFastBall) {
-                        newBall.isFast = true;
-                        newBall.dx *= 1.5;
-                        newBall.dy *= 1.5;
-                    }
-                    return newBall;
-                }
-
-                function createFireball() {
-                    fireballs.push({ x: paddle.x + paddle.width / 2, y: paddle.y, radius: 6 * scale, dy: -8 * scale, color: '#FF4500' });
-                    playSoundSafe(synth, "A5", "16n");
-                }
-
-                function shootExtraBall() {
-                    balls.push(createBall(paddle.x + paddle.width / 2, paddle.y, (Math.random() - 0.5) * 4, -4));
-                    playSoundSafe(synth, "G5", "16n");
-                }
-
-                function createPowerUp(x, y) {
-                    let type;
-                    const symbols = { 'enlarge': 'E', 'super-ball': 'S', 'multi-ball': 'M', 'extra-life': '+', 'fast-ball': 'F', 'fireball-shooter': 'C', 'ball-shooter': 'B' };
-                    if (!extraLifeDroppedThisLevel && Math.random() < 0.1) {
-                        type = 'extra-life';
-                        extraLifeDroppedThisLevel = true;
-                    } else {
-                        const rand = Math.random();
-                        if (rand < 0.30) { type = 'multi-ball'; }
-                        else {
-                            const remainingTypes = ['enlarge', 'super-ball', 'fast-ball', 'fireball-shooter', 'ball-shooter'];
-                            type = remainingTypes[Math.floor(Math.random() * remainingTypes.length)];
-                        }
-                    }
-                    if (type) {
-                        powerUps.push({ x, y, type, symbol: symbols[type], size: 15 * scale, dy: 2 * scale });
-                    }
-                }
-
-                function draw() {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    drawBricks();
-                    drawPaddle();
-                    if (enemyAIPaddle.active) drawEnemyAIPaddle();
-                    drawPowerUps();
-                    drawBalls();
-                    drawFireballs();
-                    drawCornerBumpers();
-                }
-
-                function drawCornerBumpers() { const size = cornerBumperSize * scale; ctx.fillStyle = '#444'; ctx.beginPath(); ctx.moveTo(0, canvas.height - size); ctx.lineTo(size, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height - size); ctx.lineTo(canvas.width - size, canvas.height); ctx.lineTo(canvas.width, canvas.height); ctx.closePath(); ctx.fill(); }
-                function drawBalls() { balls.forEach(ball => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fillStyle = ball.type === 'super' ? '#FFA500' : '#00FFFF'; ctx.fill(); ctx.closePath(); }); }
-                function drawFireballs() { fireballs.forEach(fb => { ctx.beginPath(); ctx.arc(fb.x, fb.y, fb.radius, 0, Math.PI * 2); ctx.fillStyle = fb.color; ctx.fill(); ctx.closePath(); }); }
-                function drawPaddle() { ctx.beginPath(); ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height); ctx.fillStyle = paddle.color; ctx.fill(); ctx.closePath(); }
-                function drawEnemyAIPaddle() { ctx.beginPath(); ctx.rect(enemyAIPaddle.x, enemyAIPaddle.y, enemyAIPaddle.width, enemyAIPaddle.height); ctx.fillStyle = enemyAIPaddle.color; ctx.fill(); ctx.closePath(); }
-                function drawBricks() { bricks.flat().forEach(b => { if (b.status === 1) { ctx.beginPath(); ctx.rect(b.x, b.y, brickInfo.width, brickInfo.height); ctx.fillStyle = b.health > 1 ? multiHitColors[b.health] : b.color; ctx.fill(); ctx.closePath(); } }); }
-                function drawPowerUps() { powerUps.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = '#FF00FF'; ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.font = `bold ${p.size}px 'Press Start 2P'`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.symbol, p.x, p.y); ctx.closePath(); }); }
-
-                function update() {
-                    let powerUpsToActivate = [];
-                    moveBalls();
-                    updateFireballs();
-                    powerUpsToActivate = updatePowerUps();
-                    powerUpsToActivate.forEach(type => activatePowerUp(type));
-                    updateActivePowerUps();
-                    if (enemyAIPaddle.active) updateEnemyAIPaddle();
-                }
-
-                function updateEnemyAIPaddle() { let targetBall = balls.reduce((lowest, ball) => ball.y > lowest.y ? ball : lowest, {y: -Infinity}); if(targetBall.y !== -Infinity) { enemyAIPaddle.x += (targetBall.x - (enemyAIPaddle.x + enemyAIPaddle.width / 2)) * 0.12; } if (enemyAIPaddle.x < 0) enemyAIPaddle.x = 0; if (enemyAIPaddle.x + enemyAIPaddle.width > canvas.width) enemyAIPaddle.x = canvas.width - enemyAIPaddle.width; }
-                function moveBalls() {
-                    const collisions = [];
-                    balls.forEach(ball => {
-                        ball.x += ball.dx;
-                        ball.y += ball.dy;
-                        if (ball.x > canvas.width - ball.radius || ball.x < ball.radius) { ball.dx = -ball.dx; }
-                        if (ball.y < ball.radius) { ball.dy = -ball.dy; }
-                        const size = cornerBumperSize * scale;
-                        if (ball.y > canvas.height - size) {
-                            if (ball.x < size && ball.dy > 0) { ball.dx = Math.abs(ball.dy); ball.dy = -Math.abs(ball.dx); playSoundSafe(synth, "E4", "8n"); }
-                            if (ball.x > canvas.width - size && ball.dy > 0) { ball.dx = -Math.abs(ball.dy); ball.dy = -Math.abs(ball.dx); playSoundSafe(synth, "E4", "8n"); }
-                        }
-                        if (enemyAIPaddle.active && ball.y < enemyAIPaddle.y + enemyAIPaddle.height + ball.radius && ball.dy < 0) { if (ball.x > enemyAIPaddle.x && ball.x < enemyAIPaddle.x + enemyAIPaddle.width) { ball.dy = -ball.dy; playSoundSafe(synth, "G3", "8n"); } }
-                        if (ball.y > paddle.y - ball.radius && ball.y < paddle.y + paddle.height && ball.x > paddle.x && ball.x < paddle.x + paddle.width) { let collidePoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2); let currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy); let angle; if (Math.abs(collidePoint) < 0.1) { angle = (collidePoint >= 0 ? 1 : -1) * (Math.PI / 8); } else { angle = collidePoint * (Math.PI / 3); } ball.dx = currentSpeed * Math.sin(angle); ball.dy = -currentSpeed * Math.cos(angle); ball.y += ball.dy; playSoundSafe(synth, "C4", "8n"); }
-                        const hitBrick = brickCollisionDetection(ball);
-                        if (hitBrick) { collisions.push({ ball, brick: hitBrick }); }
-                    });
-                    collisions.forEach(({ ball, brick }) => resolveBrickCollision(ball, brick));
-                    const initialBallCount = balls.length;
-                    balls = balls.filter(ball => ball.y < canvas.height);
-                    if (balls.length < initialBallCount && balls.length > 0) playSoundSafe(synth, "C3", "8n");
-                    if (balls.length === 0 && gameState === 'playing') {
-                        lives--;
-                        lifeLostThisLevel = true;
-                        playSoundSafe(metalSynth, "C2", "4n");
-                        if (lives <= 0) gameOver(); else resetBallAndPaddle();
-                    }
-                }
-
-                function updateFireballs() { fireballs.forEach((fb, index) => { fb.y += fb.dy; if (fb.y < 0) { fireballs.splice(index, 1); return; } for (const b of bricks.flat()) { if (b.status === 1 && fb.x > b.x && fb.x < b.x + brickInfo.width && fb.y > b.y && fb.y < b.y + brickInfo.height) { fireballs.splice(index, 1); handleBrickHit(b); return; } } }); }
-                function handleBrickHit(b) { if (b.status !== 1) return; b.health--; score += 10; if (b.health <= 0) { playSoundSafe(brickBreakSynth, "8n"); b.status = 0; score += 20; const isSpecialLevel = level >= 5 && level <= 8; const enemyChance = isSpecialLevel ? 0.10 : 0.03; let powerUpChance; if (b.initialHealth > 1) { powerUpChance = 0.80; } else { powerUpChance = isSpecialLevel ? 0.40 : 0.25; } if (Math.random() < enemyChance && !enemyAIPaddle.active) { activateEnemyAI(); } else if (Math.random() < powerUpChance) { createPowerUp(b.x + brickInfo.width / 2, b.y + brickInfo.height / 2); } } else { playSoundSafe(brickHitSynth, "C2", "8n"); } checkWin(); }
-                function brickCollisionDetection(ball) { for (const b of bricks.flat()) { if (b.status !== 1) continue; const closestX = Math.max(b.x, Math.min(ball.x, b.x + brickInfo.width)); const closestY = Math.max(b.y, Math.min(ball.y, b.y + brickInfo.height)); const distanceX = ball.x - closestX; const distanceY = ball.y - closestY; const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY); if (distanceSquared < (ball.radius * ball.radius)) { return b; } } return null; }
-                function resolveBrickCollision(ball, b) { if (b.status !== 1) return; if (ball.type !== 'super') { const closestX = Math.max(b.x, Math.min(ball.x, b.x + brickInfo.width)); const closestY = Math.max(b.y, Math.min(ball.y, b.y + brickInfo.height)); const distanceX = ball.x - closestX; const distanceY = ball.y - closestY; const overlapX = ball.radius - Math.abs(distanceX); const overlapY = ball.radius - Math.abs(distanceY); if (overlapX > overlapY) { ball.dy = -ball.dy; ball.y += ball.dy > 0 ? overlapY : -overlapY; } else { ball.dx = -ball.dx; ball.x += ball.dx > 0 ? overlapX : -overlapX; } } handleBrickHit(b); }
-                function updatePowerUps() { const collectedPowerUps = []; powerUps = powerUps.filter(p => { p.y += p.dy; if (p.y > paddle.y && p.x > paddle.x && p.x < paddle.x + paddle.width) { collectedPowerUps.push(p.type); return false; } return p.y < canvas.height; }); return collectedPowerUps; }
-                function updateActivePowerUps() { const now = Date.now(); if (powerUpState.isFireballShooter) { if (now > powerUpState.fireballShooterEndTime) { powerUpState.isFireballShooter = false; } else if (now > powerUpState.nextFireballTime) { createFireball(); powerUpState.nextFireballTime = now + 1000; } } if (powerUpState.isBallShooter) { if (now > powerUpState.ballShooterEndTime) { powerUpState.isBallShooter = false; } else if (now > powerUpState.nextBallTime) { shootExtraBall(); powerUpState.nextBallTime = now + 2000; } } if (powerUpState.isFastBall && now > powerUpState.fastBallEndTime) { powerUpState.isFastBall = false; balls.forEach(ball => { if (ball.isFast) { ball.dx /= 1.5; ball.dy /= 1.5; ball.isFast = false; } }); } }
-                function activatePowerUp(type) { playSoundSafe(synth, "C6", "8n"); if (type === 'enlarge') { paddle.baseWidth = 150; resizeAndScale(); setTimeout(() => { paddle.baseWidth = 100; resizeAndScale(); }, 10000); } else if (type === 'super-ball') { balls.forEach(b => b.type = 'super'); setTimeout(() => balls.forEach(b => b.type = 'normal'), 10000); } else if (type === 'multi-ball') { const originalBalls = [...balls]; originalBalls.forEach(b => { balls.push(createBall(b.x, b.y, b.dx + 1, b.dy)); balls.push(createBall(b.x, b.y, b.dx - 1, b.dy)); }); } else if (type === 'extra-life') { lives++; } else if (type === 'fast-ball') { if (!powerUpState.isFastBall) { balls.forEach(ball => { ball.dx *= 1.5; ball.dy *= 1.5; ball.isFast = true; }); } powerUpState.isFastBall = true; powerUpState.fastBallEndTime = Date.now() + 8000; } else if (type === 'fireball-shooter') { powerUpState.isFireballShooter = true; powerUpState.fireballShooterEndTime = Date.now() + 10000; powerUpState.nextFireballTime = Date.now(); } else if (type === 'ball-shooter') { powerUpState.isBallShooter = true; powerUpState.ballShooterEndTime = Date.now() + 10000; powerUpState.nextBallTime = Date.now(); } }
-                function activateEnemyAI() { enemyAIPaddle.active = true; if(audioInitialized) { const now = Tone.now(); megatronSynth.triggerAttackRelease("G2", "4n", now); megatronSynth.triggerAttackRelease("C3", "4n", now + 0.3); megatronSynth.triggerAttackRelease("F2", "2n", now + 0.6); } setTimeout(() => { enemyAIPaddle.active = false; }, 10000); }
-
-                function checkWin() { if (bricks.flat().every(b => b.status === 0)) { if (!lifeLostThisLevel) { lives++; } if (level === 10) { winGame(); return; } gameState = 'level-transition'; level++; powerUps = []; fireballs = []; powerUpState.isFireballShooter = false; powerUpState.isBallShooter = false; powerUpState.isFastBall = false; playSoundSafe(synth, "G5", "2n"); levelTransitionEndTime = Date.now() + 2500; } }
-                function startNextLevel() { extraLifeDroppedThisLevel = false; lifeLostThisLevel = false; createBricks(level); resetBallAndPaddle(); }
-                function resetBallAndPaddle() { balls = [createBall(canvas.width / 2, canvas.height - 50 * scale, 4 * (Math.random() > 0.5 ? 1 : -1), -4)]; paddle.x = (canvas.width - paddle.width) / 2; }
-                function resetGame() { score = 0; lives = 3; level = 1; powerUps = []; fireballs = []; powerUpState = { isFireballShooter: false, fireballShooterEndTime: 0, nextFireballTime: 0, isBallShooter: false, ballShooterEndTime: 0, nextBallTime: 0, isFastBall: false, fastBallEndTime: 0 }; enemyAIPaddle.active = false; extraLifeDroppedThisLevel = false; hasUsedExtraLifeChance = false; lifeLostThisLevel = false; resizeAndScale(); createBricks(level); resetBallAndPaddle(); }
-                function gameOver() { if (!hasUsedExtraLifeChance) { gameState = 'extra-life-prompt'; hasUsedExtraLifeChance = true; } else { gameState = 'game-over'; } }
-                function winGame() { gameState = 'game-won'; }
-                function startGame() { initAudio(); resetGame(); gameState = 'playing'; }
-
-                function loop() {
-                    if (gameState === 'playing') { update(); } 
-                    else if (gameState === 'level-transition') { if (Date.now() > levelTransitionEndTime) { startNextLevel(); gameState = 'playing'; } }
-                    draw();
-                    updateUI();
-                    activeGameLoop = requestAnimationFrame(loop);
-                }
-
-                function updateUI() { scoreEl.textContent = `SCORE: ${score}`; livesEl.textContent = `LIVES: ${lives}`; levelEl.textContent = `LEVEL: ${level}`; if (gameState === 'start-screen' || gameState === 'game-over') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = gameState === 'start-screen' ? 'BREAKOUT' : 'GAME OVER'; modalSubtitle.textContent = gameState === 'start-screen' ? 'Deluxe Edition' : `Final Score: ${score}`; startBtn.textContent = gameState === 'start-screen' ? 'START GAME' : 'RESTART'; } else if (gameState === 'extra-life-prompt') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = "You're out of lives..."; modalSubtitle.textContent = "But you can have one more."; startBtn.textContent = "Admit you are a bitch"; } else if (gameState === 'game-won') { modal.style.display = 'block'; startBtn.style.display = 'block'; modalText.textContent = "Congratu-Fucking-lations"; modalSubtitle.textContent = "You won!!!"; startBtn.textContent = "Play Again?"; } else if (gameState === 'level-transition') { modal.style.display = 'block'; startBtn.style.display = 'none'; modalText.textContent = `LEVEL ${level}`; modalSubtitle.textContent = "Get Ready!"; } else { modal.style.display = 'none'; } }
-                function movePaddle(x) { paddle.x = x - paddle.width / 2; if (paddle.x < 0) { paddle.x = 0; } if (paddle.x + paddle.width > canvas.width) { paddle.x = canvas.width - paddle.width; } }
-                function handleMove(e) { if (e.type.includes('touch')) { e.preventDefault(); } const rect = canvas.getBoundingClientRect(); const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; if (clientX === undefined) return; movePaddle(clientX - rect.left); }
-
-                canvas.addEventListener('mousemove', handleMove);
-                canvas.addEventListener('touchmove', handleMove, { passive: false });
-                canvas.addEventListener('touchstart', handleMove, { passive: false });
-                startBtn.addEventListener('click', () => { if (gameState === 'start-screen' || gameState === 'game-over' || gameState === 'game-won') { startGame(); } else if (gameState === 'extra-life-prompt') { lives = 1; resetBallAndPaddle(); gameState = 'playing'; } });
-                window.addEventListener('resize', () => { resizeAndScale(); draw(); updateUI(); });
-                
-                resizeAndScale();
-                loop();
-            }
-
-            // --- CONNECT FOUR GAME INITIALIZATION ---
-            function initConnectFourGame() {
-                const boardElement = document.getElementById('board');
-                const columnSelectorsElement = document.getElementById('column-selectors');
-                const statusElement = document.getElementById('status');
-                const newGameButton = document.getElementById('newGame');
-                const winnerModal = document.getElementById('winnerModal');
-                const winnerModalContent = winnerModal.querySelector('div');
-                const winnerText = document.getElementById('winnerText');
-                const playAgainButton = document.getElementById('playAgain');
-
-                const ROWS = 6;
-                const COLS = 7;
-                const HUMAN_PLAYER = 1;
-                const AI_PLAYER = 2;
-                let board = [];
-                let currentPlayer = HUMAN_PLAYER;
-                let gameOver = false;
-
-                function createBoard() {
-                    board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-                    gameOver = false;
-                    currentPlayer = HUMAN_PLAYER;
-                    boardElement.innerHTML = '';
-                    columnSelectorsElement.innerHTML = '';
-                    for (let row = 0; row < ROWS; row++) {
-                        for (let col = 0; col < COLS; col++) {
-                            const cell = document.createElement('div');
-                            cell.classList.add('cell');
-                            cell.dataset.row = row;
-                            cell.dataset.col = col;
-                            boardElement.appendChild(cell);
-                        }
-                    }
-                    for (let col = 0; col < COLS; col++) {
-                        const column = document.createElement('div');
-                        column.classList.add('column');
-                        column.dataset.col = col;
-                        column.addEventListener('click', () => handleColumnClick(col));
-                        columnSelectorsElement.appendChild(column);
-                    }
-                    updateStatus();
-                    toggleColumnSelectors(true);
-                }
-
-                function handleColumnClick(col) {
-                    if (gameOver || currentPlayer !== HUMAN_PLAYER) return;
-                    const row = findAvailableRow(board, col);
-                    if (row === -1) return;
-                    dropPiece(row, col, HUMAN_PLAYER);
-                    if (gameOver) return;
-                    currentPlayer = AI_PLAYER;
-                    updateStatus();
-                    toggleColumnSelectors(false);
-                    setTimeout(aiMove, 500);
-                }
-
-                function aiMove() {
-                    statusElement.textContent = "Computer is thinking...";
-                    const { col } = minimax(board, 7, -Infinity, Infinity, true);
-                    if (col === null) {
-                        gameOver = true;
-                        showWinner("It's a Draw!");
-                        return;
-                    }
-                    const row = findAvailableRow(board, col);
-                    dropPiece(row, col, AI_PLAYER);
-                    if (gameOver) return;
-                    currentPlayer = HUMAN_PLAYER;
-                    updateStatus();
-                    toggleColumnSelectors(true);
-                }
-
-                function findAvailableRow(b, col) { for (let row = ROWS - 1; row >= 0; row--) { if (b[row][col] === 0) return row; } return -1; }
-                function dropPiece(row, col, player) {
-                    board[row][col] = player;
-                    const piece = document.createElement('div');
-                    piece.classList.add('piece', `player${player}`);
-                    const targetCell = document.querySelector(`#connect-four-container .cell[data-row='${row}'][data-col='${col}']`);
-                    targetCell.appendChild(piece);
-                    if (checkForWin(board, player)) {
-                        gameOver = true;
-                        if (player === HUMAN_PLAYER) { showWinner("You won! Screenshot for a free suprise from Brett."); } 
-                        else { showWinner("The Computer Wins! You're Gay!"); }
-                        highlightWinningCells(board, player);
-                    } else if (isBoardFull(board)) {
-                        gameOver = true;
-                        showWinner("It's a Draw! Brett's still Gay!");
-                    }
-                }
-
-                function updateStatus() { if (gameOver) return; if (currentPlayer === HUMAN_PLAYER) { statusElement.textContent = "Your Turn (Red)"; statusElement.style.color = '#ef4444'; } else { statusElement.textContent = "Computer's Turn (Yellow)"; statusElement.style.color = '#facc15'; } }
-                function toggleColumnSelectors(enabled) { columnSelectorsElement.style.pointerEvents = enabled ? 'auto' : 'none'; }
-                function showWinner(message) { statusElement.textContent = message; winnerText.textContent = message; winnerModal.classList.remove('hidden'); winnerModal.classList.add('flex'); setTimeout(() => { winnerModalContent.style.transform = 'scale(1)'; winnerModalContent.style.opacity = '1'; }, 50); }
-                function isBoardFull(b) { return b[0].every(cell => cell !== 0); }
-                function checkForWin(b, player) { for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) return true; } } for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) return true; } } for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) return true; } } for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) return true; } } return false; }
-                function highlightWinningCells(b, player) {
-                    let winningLine = [];
-                    const findLine = () => {
-                        for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) return [{r,c},{r,c:c+1},{r,c:c+2},{r,c:c+3}]; } }
-                        for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) return [{r,c},{r:r+1,c},{r:r+2,c},{r:r+3,c}]; } }
-                        for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) return [{r,c},{r:r+1,c:c+1},{r:r+2,c:c+2},{r:r+3,c:c+3}]; } }
-                        for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) return [{r,c},{r:r-1,c:c+1},{r:r-2,c:c+2},{r:r-3,c:c+3}]; } }
-                        return [];
-                    };
-                    winningLine = findLine();
-                    winningLine.forEach(pos => {
-                        const cellElement = document.querySelector(`#connect-four-container .cell[data-row='${pos.r}'][data-col='${pos.c}']`);
-                        if (cellElement) cellElement.classList.add('winning-cell');
-                    });
-                }
-                function scorePosition(b, player) {
-                    let score = 0;
-                    const centerArray = b.map(row => row[Math.floor(COLS / 2)]);
-                    score += centerArray.filter(p => p === player).length * 6;
-                    const scoreLine = (line, p) => {
-                        let s = 0;
-                        const opponentPlayer = p === AI_PLAYER ? HUMAN_PLAYER : AI_PLAYER;
-                        const playerCount = line.filter(val => val === p).length;
-                        const emptyCount = line.filter(val => val === 0).length;
-                        const opponentCount = line.filter(val => val === opponentPlayer).length;
-                        if (playerCount === 4) s += 1000000;
-                        else if (playerCount === 3 && emptyCount === 1) s += 5000;
-                        else if (playerCount === 2 && emptyCount === 2) s += 50;
-                        if (opponentCount === 3 && emptyCount === 1) s -= 10000;
-                        return s;
-                    };
-                    for (let r = 0; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine(b[r].slice(c, c + 4), player); } }
-                    for (let c = 0; c < COLS; c++) { for (let r = 0; r <= ROWS - 4; r++) { score += scoreLine([b[r][c], b[r+1][c], b[r+2][c], b[r+3][c]], player); } }
-                    for (let r = 0; r <= ROWS - 4; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine([b[r][c], b[r+1][c+1], b[r+2][c+2], b[r+3][c+3]], player); } }
-                    for (let r = 3; r < ROWS; r++) { for (let c = 0; c <= COLS - 4; c++) { score += scoreLine([b[r][c], b[r-1][c+1], b[r-2][c+2], b[r-3][c+3]], player); } }
-                    return score;
-                }
-                function getValidLocations(b) { return [...Array(COLS).keys()].filter(c => b[0][c] === 0); }
-                function minimax(b, depth, alpha, beta, maximizingPlayer) {
-                    const isTerminal = checkForWin(b, HUMAN_PLAYER) || checkForWin(b, AI_PLAYER) || isBoardFull(b);
-                    if (depth === 0 || isTerminal) {
-                        if (isTerminal) {
-                            if (checkForWin(b, AI_PLAYER)) return { col: null, score: 10000000 };
-                            if (checkForWin(b, HUMAN_PLAYER)) return { col: null, score: -10000000 };
-                            return { col: null, score: 0 };
-                        }
-                        return { col: null, score: scorePosition(b, AI_PLAYER) };
-                    }
-                    const validLocations = getValidLocations(b);
-                    const columnOrder = [3, 4, 2, 5, 1, 6, 0];
-                    const prioritizedLocations = columnOrder.filter(col => validLocations.includes(col));
-                    if (maximizingPlayer) {
-                        let value = -Infinity;
-                        let column = prioritizedLocations[0];
-                        for (const col of prioritizedLocations) {
-                            let b_copy = b.map(r => [...r]);
-                            const row = findAvailableRow(b_copy, col);
-                            b_copy[row][col] = AI_PLAYER;
-                            let new_score = minimax(b_copy, depth - 1, alpha, beta, false).score;
-                            if (new_score > value) {
-                                value = new_score;
-                                column = col;
-                            }
-                            alpha = Math.max(alpha, value);
-                            if (alpha >= beta) break;
-                        }
-                        return { col: column, score: value };
-                    } else { // Minimizing player
-                        let value = Infinity;
-                        let column = prioritizedLocations[0];
-                        for (const col of prioritizedLocations) {
-                            let b_copy = b.map(r => [...r]);
-                            const row = findAvailableRow(b_copy, col);
-                            b_copy[row][col] = HUMAN_PLAYER;
-                            let new_score = minimax(b_copy, depth - 1, alpha, beta, true).score;
-                            if (new_score < value) {
-                                value = new_score;
-                                column = col;
-                            }
-                            beta = Math.min(beta, value);
-                            if (alpha >= beta) break;
-                        }
-                        return { col: column, score: value };
-                    }
-                }
-                function resetGame() {
-                    winnerModal.classList.remove('flex');
-                    winnerModal.classList.add('hidden');
-                    createBoard();
-                }
-                newGameButton.addEventListener('click', createBoard);
-                playAgainButton.addEventListener('click', resetGame);
-                createBoard();
-            }
-
-            // --- INITIALIZE ALL APPS ---
-            initFeedApp();
-            
-            // Start on the last visited page or feed page by default
-            let lastPage = localStorage.getItem('lastActivePage') || 'feed-page';
-            showPage(lastPage);
-        });
-    </script>
+  </nav>
+
+  <!-- ===== 88x31 buttons ===== -->
+  <div class="badges" role="img" aria-label="Site badges: Brett approved, Y2K compliant, made with Notepad, pride since 2026, Netscape now, works on ur phone">
+    <span class="b88 b88--brett"><b>BRETT</b><i>APPROVED</i></span>
+    <span class="b88 b88--y2k"><b>Y2K</b><i>compliant</i></span>
+    <span class="b88 b88--html"><i>made with</i><b>NOTEPAD</b></span>
+    <span class="b88 b88--rain"><b>&#127752; PRIDE</b><i>since 2026</i></span>
+    <span class="b88 b88--nets"><i>Netscape</i><b>NOW!</b></span>
+    <span class="b88 b88--phone"><i>works on</i><b>UR PHONE</b></span>
+  </div>
+
+  <footer class="foot">
+    <p class="foot__best">Thanks for scrolling! That's all the gay stuff for now.</p>
+    <p>Best viewed in <b>Netscape Navigator 4.0</b> at 800&times;600<br><span class="small">(or literally any phone)</span></p>
+    <p class="small">&copy; 2026 brettisgay.com &bull; Last updated Oct 18, 2026 &bull; No Bretts were harmed in the making of this website</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="js/main.js" defer></script>
 </body>
 </html>

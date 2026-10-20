@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>F1 Reaction Test | brettisgay.com</title>
+<meta name="description" content="Free F1 start-lights reaction test. Wait for the five red lights to go out, then tap. Are you faster than Brett closing his incognito tabs?">
+<link rel="canonical" href="https://brettisgay.com/games/f1-reaction/">
+<meta name="theme-color" content="#000080">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="brettisgay.com">
+<meta property="og:url" content="https://brettisgay.com/games/f1-reaction/">
+<meta property="og:title" content="F1 Reaction Test: are you faster than Brett?">
+<meta property="og:description" content="Free F1 start-lights reaction test. Wait for the five red lights to go out, then tap. Are you faster than Brett closing his incognito tabs?">
+<meta property="og:image" content="https://brettisgay.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Brett in a neon tank top and pink shorts next to rainbow text: Brett is gay dot com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="F1 Reaction Test: are you faster than Brett?">
+<meta name="twitter:description" content="Free F1 start-lights reaction test. Wait for the five red lights to go out, then tap. Are you faster than Brett closing his incognito tabs?">
+<meta name="twitter:image" content="https://brettisgay.com/og-image.jpg">
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/game.css">
+</head>
+<body class="gp">
+<div class="gp-wrap">
+  <main class="win gwin" aria-labelledby="game-h">
+    <div class="win__bar">
+      <a class="btn98" href="../../#games" id="back" aria-label="Back to brettisgay.com games">&#9664; Back</a>
+      <h1 id="game-h" class="win__title"><span class="sr-only">F1 Reaction: </span>C:\BRETT\F1REACT.EXE</h1>
+      <a class="btn98 gwin__x" href="../../#games" aria-label="Close F1 Reaction and go home"><span aria-hidden="true">&times;</span></a>
+    </div>
+    <div class="gwin__body">
+        <div class="f1" id="f1">
+          <div>
+            <h2 class="f1__h">Reaction Test</h2>
+            <p class="f1__sub">Wait for the lights to go out...</p>
+          </div>
+          <div class="f1__rig" aria-hidden="true">
+            <div class="f1__col"><div class="light" id="light-1-a"></div><div class="light" id="light-1-b"></div></div>
+            <div class="f1__col"><div class="light" id="light-2-a"></div><div class="light" id="light-2-b"></div></div>
+            <div class="f1__col"><div class="light" id="light-3-a"></div><div class="light" id="light-3-b"></div></div>
+            <div class="f1__col"><div class="light" id="light-4-a"></div><div class="light" id="light-4-b"></div></div>
+            <div class="f1__col"><div class="light" id="light-5-a"></div><div class="light" id="light-5-b"></div></div>
+          </div>
+          <div class="f1__status">
+            <p class="f1__go" id="f1-status" aria-live="polite">Tap anywhere to start</p>
+            <p class="f1__hint">(or press the space bar)</p>
+          </div>
+          <div class="dlg" id="f1-modal" hidden>
+            <div class="dlg__win" role="dialog" aria-modal="true" aria-labelledby="f1-modal-title">
+              <div class="dlg__bar"><span class="win__icon" aria-hidden="true"></span><span id="f1-modal-title">Reaction time</span></div>
+              <div class="dlg__body">
+                <p class="dlg__big" id="f1-modal-time">0.000s</p>
+                <p id="f1-modal-new" hidden><span class="dlg__new">NEW BEST!</span></p>
+                <p id="f1-modal-desc"></p>
+                <p class="small" id="f1-modal-best"></p>
+                <button class="btn98" type="button" id="f1-modal-btn">Play Again</button>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="win__status"><span id="best" aria-live="polite">Best: --</span><span>Brett's Computer</span></div>
+  </main>
+</div>
+<script src="../../js/f1.js" defer></script>
+</body>
+</html>

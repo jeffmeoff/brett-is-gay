@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Matrix Mode: Type a Secret Message | brettisgay.com</title>
+<meta name="description" content="Matrix-style digital rain that spells out your own secret message. Type anything, switch to classic mode, change the speed.">
+<link rel="canonical" href="https://brettisgay.com/games/matrix/">
+<meta name="theme-color" content="#000080">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="brettisgay.com">
+<meta property="og:url" content="https://brettisgay.com/games/matrix/">
+<meta property="og:title" content="Matrix Mode: make the digital rain spell ur own secret message">
+<meta property="og:description" content="Matrix-style digital rain that spells out your own secret message. Type anything, switch to classic mode, change the speed.">
+<meta property="og:image" content="https://brettisgay.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Brett in a neon tank top and pink shorts next to rainbow text: Brett is gay dot com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Matrix Mode: make the digital rain spell ur own secret message">
+<meta name="twitter:description" content="Matrix-style digital rain that spells out your own secret message. Type anything, switch to classic mode, change the speed.">
+<meta name="twitter:image" content="https://brettisgay.com/og-image.jpg">
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/game.css">
+</head>
+<body class="gp">
+<div class="gp-wrap">
+  <main class="win gwin" aria-labelledby="game-h">
+    <div class="win__bar">
+      <a class="btn98" href="../../#games" id="back" aria-label="Back to brettisgay.com games">&#9664; Back</a>
+      <h1 id="game-h" class="win__title"><span class="sr-only">Matrix Mode: </span>C:\BRETT\MATRIX.EXE</h1>
+      <a class="btn98 gwin__x" href="../../#games" aria-label="Close Matrix Mode and go home"><span aria-hidden="true">&times;</span></a>
+    </div>
+    <div class="gwin__body">
+        <div class="mx" id="mx">
+          <canvas id="matrix-canvas" aria-label="Matrix digital rain animation"></canvas>
+          <div class="mx__ctl" id="matrix-controls">
+            <label for="matrix-phrase-input">System Override</label>
+            <input type="text" id="matrix-phrase-input" value="BRETT IS GAY" placeholder="Type to change the code..." autocomplete="off" spellcheck="false" maxlength="60">
+            <button class="mx__btn" type="button" id="matrix-mode-toggle">Enable Classic Matrix</button>
+            <div class="mx__speed"><label for="matrix-speed-slider">Speed:</label><input type="range" id="matrix-speed-slider" min="10" max="60" value="45"></div>
+            <div class="mx__small">(Tap the rain to hide/show this)</div>
+          </div>
+        </div>
+    </div>
+    <div class="win__status"><span id="best" aria-live="polite">Tap the rain to hide/show controls</span><span>Brett's Computer</span></div>
+  </main>
+</div>
+<script src="../../js/matrix.js" defer></script>
+</body>
+</html>

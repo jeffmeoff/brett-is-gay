@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connect Four vs. AI | brettisgay.com</title>
+<meta name="description" content="Play Connect Four against a computer that is way too good. Free, works on your phone. Win and screenshot it for a surprise from Brett.">
+<link rel="canonical" href="https://brettisgay.com/games/connect-four/">
+<meta name="theme-color" content="#000080">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="brettisgay.com">
+<meta property="og:url" content="https://brettisgay.com/games/connect-four/">
+<meta property="og:title" content="Connect Four vs. a computer that is way too good">
+<meta property="og:description" content="Play Connect Four against a computer that is way too good. Free, works on your phone. Win and screenshot it for a surprise from Brett.">
+<meta property="og:image" content="https://brettisgay.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Brett in a neon tank top and pink shorts next to rainbow text: Brett is gay dot com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Connect Four vs. a computer that is way too good">
+<meta name="twitter:description" content="Play Connect Four against a computer that is way too good. Free, works on your phone. Win and screenshot it for a surprise from Brett.">
+<meta name="twitter:image" content="https://brettisgay.com/og-image.jpg">
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/game.css">
+</head>
+<body class="gp">
+<div class="gp-wrap">
+  <main class="win gwin" aria-labelledby="game-h">
+    <div class="win__bar">
+      <a class="btn98" href="../../#games" id="back" aria-label="Back to brettisgay.com games">&#9664; Back</a>
+      <h1 id="game-h" class="win__title"><span class="sr-only">Connect Four: </span>C:\BRETT\CONNECT4.EXE</h1>
+      <a class="btn98 gwin__x" href="../../#games" aria-label="Close Connect Four and go home"><span aria-hidden="true">&times;</span></a>
+    </div>
+    <div class="gwin__body">
+        <div class="c4" id="c4">
+          <h2 class="c4__h">Connect Four vs. AI</h2>
+          <div class="c4__status" aria-live="polite"><span class="c4__dot" id="status-dot" aria-hidden="true"></span><span id="status">Your Turn (Red)</span></div>
+          <div class="c4__board">
+            <div class="board" id="board" aria-hidden="true"></div>
+            <div class="cols" id="column-selectors"></div>
+          </div>
+          <button class="btn98" type="button" id="newGame">New Game</button>
+          <div class="dlg" id="winnerModal" hidden>
+            <div class="dlg__win" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+              <div class="dlg__bar"><span class="win__icon" aria-hidden="true"></span><span id="winnerTitle">Game Over</span></div>
+              <div class="dlg__body">
+                <p id="winnerText"></p>
+                <p class="small" id="winnerRecord"></p>
+                <button class="btn98" type="button" id="playAgain">Play Again</button>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="win__status"><span id="best" aria-live="polite">Record: 0W 0L 0D</span><span>Brett's Computer</span></div>
+  </main>
+</div>
+<script src="../../js/connect-four.js" defer></script>
+</body>
+</html>

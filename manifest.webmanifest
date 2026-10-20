@@ -1,0 +1,14 @@
+{
+  "name": "brettisgay.com",
+  "short_name": "Brett",
+  "description": "Brett's Totally Rad Homepage: photos, games and a guestbook.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000033",
+  "theme_color": "#000033",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
