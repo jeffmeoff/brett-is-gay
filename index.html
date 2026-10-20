@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>brettisgay.com | Brett's Totally Rad Homepage: Photos &amp; Games</title>
-<meta name="description" content="The #1 site on the information superhighway about my cousin Brett. Photos, free phone games (F1 Reaction, Breakout, Connect Four, Matrix Mode), a guestbook and a hit counter. Brett approved.">
+<meta name="description" content="The #1 site on the information superhighway all about Brett. Photos, free phone games (F1 Reaction, Breakout, Connect Four, Matrix Mode), a guestbook and a hit counter.">
 <link rel="canonical" href="https://brettisgay.com/">
 <meta name="theme-color" content="#000033">
 
@@ -13,14 +13,14 @@
 <meta property="og:site_name" content="brettisgay.com">
 <meta property="og:url" content="https://brettisgay.com/">
 <meta property="og:title" content="brettisgay.com: Brett's Totally Rad Homepage">
-<meta property="og:description" content="Photos, games and a guestbook, all about my cousin Brett. Best viewed in Netscape Navigator.">
+<meta property="og:description" content="Photos, games and a guestbook, all about Brett. Best viewed in Netscape Navigator.">
 <meta property="og:image" content="https://brettisgay.com/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Brett in a neon tank top and pink shorts next to rainbow text: Brett is gay dot com">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="brettisgay.com: Brett's Totally Rad Homepage">
-<meta name="twitter:description" content="Photos, games and a guestbook, all about my cousin Brett.">
+<meta name="twitter:description" content="Photos, games and a guestbook, all about Brett.">
 <meta name="twitter:image" content="https://brettisgay.com/og-image.jpg">
 
 <!-- Icons -->
@@ -38,8 +38,9 @@
 <!-- ===== scrolling ticker (CSS, not <marquee>) ===== -->
 <div class="ticker" role="marquee" aria-label="Site news">
   <div class="ticker__track">
-    <span>★ WELCOME 2 BRETTISGAY.COM ★ The #1 site on the information superhighway about my cousin Brett ★ Now with 4 games!!! ★ Send us ur photos of Brett ★ MERCH COMING SOON ★ Sign my guestbook!!! ★&nbsp;</span>
-    <span aria-hidden="true">★ WELCOME 2 BRETTISGAY.COM ★ The #1 site on the information superhighway about my cousin Brett ★ Now with 4 games!!! ★ Send us ur photos of Brett ★ MERCH COMING SOON ★ Sign my guestbook!!! ★&nbsp;</span>
+    <span class="ticker__full">★ WELCOME 2 BRETTISGAY.COM ★ BREAKING: Local man insists $20 is $20. Economists baffled. More at 11. ★ Brett named Employee of the Month at the refinery for the 14th month in a row. The other 200 guys are "just coworkers." ★ Refinery reports record output. Brett reports record "team bonding." ★ Brett has never seen a pair of shorts he thought were too short. ★&nbsp;</span>
+    <span class="ticker__full" aria-hidden="true">★ WELCOME 2 BRETTISGAY.COM ★ BREAKING: Local man insists $20 is $20. Economists baffled. More at 11. ★ Brett named Employee of the Month at the refinery for the 14th month in a row. The other 200 guys are "just coworkers." ★ Refinery reports record output. Brett reports record "team bonding." ★ Brett has never seen a pair of shorts he thought were too short. ★&nbsp;</span>
+    <span class="ticker__short">★ WELCOME 2 BRETTISGAY.COM ★ BREAKING: Local man insists $20 is $20. Economists baffled. More at 11. ★ Brett named Employee of the Month at the refinery for the 14th month in a row. The other 200 guys are "just coworkers." ★ Refinery reports record output. Brett reports record "team bonding." ★ Brett has never seen a pair of shorts he thought were too short. ★</span>
   </div>
 </div>
 
@@ -49,7 +50,7 @@
   <header class="masthead">
     <p class="masthead__pre">~*~ Welcome to ~*~</p>
     <h1 class="wordart"><span class="wordart__a">Brett</span> <span class="nowrap"><span class="wordart__b">is Gay</span><span class="wordart__c">.com</span></span></h1>
-    <p class="masthead__sub">Est. 2026 &bull; 100% Brett Approved&trade; &bull; He knows. He's fine with it.</p>
+    <p class="masthead__sub">Est. 2025 &bull; 100% Gay&trade; &bull; Best viewed at 800&times;600</p>
 
     <div class="masthead__row">
       <svg class="construction" viewBox="0 0 176 52" width="176" height="52" role="img" aria-label="Under construction">
@@ -69,22 +70,28 @@
         <circle class="construction__light" cx="164" cy="26" r="5" fill="#ff3b00"/>
       </svg>
 
-      <div class="counter" aria-label="Fake visitor counter">
-        <span class="counter__label">You are visitor #</span>
-        <span class="counter__digits" id="hits">0013337</span>
+      <div class="counter" aria-label="Visitor counter">
+        <!-- Counter start date: edit here -->
+        <span class="counter__label">Visitors since <span id="hitsSince">10/19/2026</span></span>
+        <span class="counter__digits" id="hits">-------</span>
+        <span class="counter__label counter__label--sm">Visitors this month</span>
+        <span class="counter__digits counter__digits--sm" id="hitsMonth">-----</span>
       </div>
     </div>
 
-    <button class="btn98 midi" id="midi" type="button" aria-pressed="false">
-      <span aria-hidden="true">&#9835;</span> MIDI: <b id="midiState">OFF</b>
+    <button class="btn98 midi" id="midi" type="button" aria-expanded="false" aria-controls="player">
+      <span aria-hidden="true">&#9835;</span> MIDI: <b>Born This Way</b>
     </button>
+    <div class="player win" id="player" hidden>
+      <div class="win__bar"><span class="win__icon" aria-hidden="true"></span><span class="win__title">Media Player - born_this_way.mid</span><button type="button" class="player__x" id="playerClose" aria-label="Close music player">&times;</button></div>
+      <div class="player__screen" id="playerScreen"></div>
+    </div>
   </header>
 
   <!-- ===== main nav ===== -->
   <nav class="nav" aria-label="Main">
     <a class="btn98" href="#photos">&#128247; Photos</a>
     <a class="btn98" href="#games">&#127918; Games <span class="new">NEW!</span></a>
-    <a class="btn98" href="#facts">&#11088; Brett Facts</a>
     <a class="btn98" href="#guestbook">&#128214; Guestbook</a>
   </nav>
 
@@ -95,7 +102,7 @@
       <h2 id="welcome-h" class="box__title">Welcome to brettisgay.com!!!</h2>
       <p><a href="img/full/this-is-brett.webp" class="dancer-link" aria-label="This is Brett: open full size photo"><img class="dancer" src="img/this-is-brett.webp" width="360" height="480" alt="Brett in a neon yellow tank top and pink shorts, posing on red rocks" fetchpriority="high" decoding="async"></a></p>
       <p class="lead">This is Brett.</p>
-      <p>This whole site is dedicated to my cousin Brett. It is <b>only the beginning</b>. Bookmark it (<kbd>Ctrl</kbd>+<kbd>D</kbd>), tell ur friends, and check back often because I update it like every week. <span class="new">NEW!</span> games just added!</p>
+      <p>This whole site is dedicated to Brett. It is <b>only the beginning</b>. Bookmark it (<kbd>Ctrl</kbd>+<kbd>D</kbd>), tell ur friends, and check back often because I update it like every week. <span class="new">NEW!</span> games just added!</p>
     </section>
 
     <!-- ===== photo album ===== -->
@@ -170,16 +177,6 @@
       <div class="win__status" aria-hidden="true"><span>6 object(s)</span><span>Brett's Computer</span></div>
     </section>
 
-    <!-- ===== facts ===== -->
-    <section class="box box--facts" id="facts" aria-labelledby="facts-h">
-      <h2 id="facts-h" class="box__title">&#11088; Brett Facts &#11088;</h2>
-      <ol class="facts">
-        <li>Brett can close incognito tabs faster than an F1 driver reacts to the lights going out.</li>
-        <li>Brett changes the playlist from Ariana Grande to Joe Rogan when the boys get in the car. We all saw it, Brett.</li>
-        <li>Brett has never once avoided gay stuff. That's Carson's job.</li>
-        <li><i>Got a Brett fact? Send it in! &darr;</i></li>
-      </ol>
-    </section>
 
     <!-- ===== help / photos ===== -->
     <section class="box box--help" aria-labelledby="help-h">
@@ -189,28 +186,26 @@
       <p class="merch"><span class="new">NEW!</span> <b>MERCH COMING SOON!</b> T-shirts, mugs, mousepads (maybe)</p>
     </section>
 
-    <!-- ===== guestbook (static mock for now; a real one is a later upgrade) ===== -->
+    <!-- ===== guestbook (hosted on Atabook, moderated) ===== -->
     <section class="box box--guest" id="guestbook" aria-labelledby="guest-h">
       <h2 id="guest-h" class="box__title">&#128214; Sign my Guestbook!!! &#128214;</h2>
-      <form class="gb-form" id="gbForm" novalidate>
-        <p class="gb-uc"><b>&#128679; Guestbook under construction!</b> Signing doesn't save yet. The entries below are just samples.</p>
-        <label>Name: <input type="text" name="name" autocomplete="nickname" placeholder="xX_ur_name_Xx" maxlength="40"></label>
-        <label>Message: <textarea name="msg" rows="3" placeholder="Brett rulez!!!" maxlength="300"></textarea></label>
-        <button class="btn98" type="submit">Sign Guestbook</button>
-        <p class="small" id="gbNote" role="status"></p>
-      </form>
-      <ul class="gb" aria-label="Sample guestbook entries">
-        <li><b>~*Carson*~</b> <i>wrote:</i> For the record I was NOT avoiding anything.</li>
-        <li><b>Anonymous</b> <i>wrote:</i> Beat Breakout on level 10. Took me all weekend. 10/10.</li>
-        <li><b>Brett</b> <i>wrote:</i> I'm putting this on my resume.</li>
-      </ul>
+      <p class="gb-blurb">U made it 2 the bottom!!! Plz sign my guestbook and leave a msg 4 Brett. Be nice (or at least be funny). All posts get checked b4 they show up.</p>
+      <div class="gb-btns">
+        <a class="btn98 gb-big" href="https://brettisgay.atabook.org" target="_blank" rel="noopener">&#9997;&#65039; Sign my Guestbook!</a>
+        <a class="btn98" href="https://brettisgay.atabook.org" target="_blank" rel="noopener">&#128064; Read the Guestbook</a>
+      </div>
+      <div class="win gb-win">
+        <div class="win__bar"><span class="win__icon" aria-hidden="true"></span><span class="win__title">guestbook.exe</span><span class="win__ctrls" aria-hidden="true"><i>_</i><i>&#9633;</i><i>&times;</i></span></div>
+        <iframe class="gb-iframe" src="https://brettisgay.atabook.org" loading="lazy" title="Brett's guestbook (Atabook)"></iframe>
+      </div>
+      <p class="small">(signing opens brettisgay.atabook.org in a new tab)</p>
     </section>
 
   </main>
 
   <!-- ===== webring ===== -->
   <nav class="webring" aria-label="Webring">
-    <p class="webring__name">&#127760; This site is a proud member of the <b>Cousins of the Web</b> webring &#127760;</p>
+    <p class="webring__name">&#127760; This site is a proud member of the <b>Gay Bretts of the Web</b> webring &#127760;</p>
     <div class="webring__btns">
       <a class="btn98" href="#top" title="Previous site">&laquo; Prev</a>
       <a class="btn98" href="games/f1-reaction/" id="ringRandom" title="Random game">Random</a>
@@ -219,11 +214,10 @@
   </nav>
 
   <!-- ===== 88x31 buttons ===== -->
-  <div class="badges" role="img" aria-label="Site badges: Brett approved, Y2K compliant, made with Notepad, pride since 2026, Netscape now, works on ur phone">
-    <span class="b88 b88--brett"><b>BRETT</b><i>APPROVED</i></span>
+  <div class="badges" role="img" aria-label="Site badges: Y2K compliant, made with Notepad, pride since 2025, Netscape now, works on ur phone">
     <span class="b88 b88--y2k"><b>Y2K</b><i>compliant</i></span>
     <span class="b88 b88--html"><i>made with</i><b>NOTEPAD</b></span>
-    <span class="b88 b88--rain"><b>&#127752; PRIDE</b><i>since 2026</i></span>
+    <span class="b88 b88--rain"><b>&#127752; PRIDE</b><i>since 2025</i></span>
     <span class="b88 b88--nets"><i>Netscape</i><b>NOW!</b></span>
     <span class="b88 b88--phone"><i>works on</i><b>UR PHONE</b></span>
   </div>
@@ -231,11 +225,12 @@
   <footer class="foot">
     <p class="foot__best">Thanks for scrolling! That's all the gay stuff for now.</p>
     <p>Best viewed in <b>Netscape Navigator 4.0</b> at 800&times;600<br><span class="small">(or literally any phone)</span></p>
-    <p class="small">&copy; 2026 brettisgay.com &bull; Last updated Oct 18, 2026 &bull; No Bretts were harmed in the making of this website</p>
+    <p class="small">&copy; 2025 brettisgay.com &bull; Last updated Oct 19, 2026 &bull; No Bretts were harmed in the making of this website</p>
   </footer>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="js/main.js" defer></script>
+<script data-goatcounter="https://brettisgay.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// brettisgay.com homepage: tiny vanilla JS (hit counter, MIDI toggle, best scores, toasts)
+// brettisgay.com homepage: tiny vanilla JS (GoatCounter hit counter, Born This Way player, best scores, toasts)
 (() => {
   const $ = (s) => document.querySelector(s);
   const toast = (msg) => {
@@ -10,6 +10,10 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
 
+  // Ticker: scroll at ~70 px/s whatever the text length
+  const tk = document.querySelector('.ticker__track .ticker__full');
+  if (tk) document.querySelector('.ticker__track').style.animationDuration = Math.max(20, tk.offsetWidth / 70) + 's';
+
   // Old-style hash links (#breakout, #games/breakout) forward to the game's own page
   const routes = { f1: 'f1-reaction', 'f1-reaction': 'f1-reaction', breakout: 'breakout', 'connect-four': 'connect-four', connect4: 'connect-four', matrix: 'matrix', 'matrix-mode': 'matrix' };
   const route = () => {
@@ -20,10 +24,20 @@
   if (route()) return;
   window.addEventListener('hashchange', route);
 
-  // Fake hit counter: starts at 13,337 and goes up 1 per visit on this device
-  const n = (parseInt(store.get('bigHits') || '13336', 10) || 13336) + 1;
-  store.set('bigHits', n);
-  $('#hits').textContent = String(n).padStart(7, '0');
+  // Real hit counters from GoatCounter. Keep the dashes if blocked (ad blockers etc.).
+  // Start date shown in the label lives in index.html (#hitsSince).
+  const gc = (q, el, pad) => fetch('https://brettisgay.goatcounter.com/counter/TOTAL.json' + q)
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((d) => {
+      const n = parseInt(String(d.count).replace(/\D/g, ''), 10);
+      if (!isNaN(n) && el) el.textContent = String(n).padStart(pad, '0');
+    })
+    .catch(() => {});
+  gc('', $('#hits'), 7);
+  // "This month": from the 1st of the current month, in the visitor's local time
+  const now = new Date();
+  const m1 = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01';
+  gc('?start=' + m1, $('#hitsMonth'), 5);
 
   // Email: assembled at runtime so scrapers don't see a plain address in the HTML
   const mail = $('#mail');
@@ -56,36 +70,17 @@
     e.preventDefault(); location.href = 'games/' + g[Math.floor(Math.random() * g.length)] + '/';
   });
 
-  // Guestbook is a static mock for now (a real one is a later upgrade)
-  $('#gbForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    $('#gbNote').textContent = 'Thx 4 signing!!! The guestbook is still under construction, so nothing was saved yet.';
+  // "MIDI": official Born This Way video (youtube-nocookie). Nothing loads until tapped.
+  const midi = $('#midi'), player = $('#player'), screen = $('#playerScreen');
+  const closePlayer = () => { screen.textContent = ''; player.hidden = true; midi.setAttribute('aria-expanded', 'false'); };
+  midi.addEventListener('click', () => {
+    if (!player.hidden) { closePlayer(); return; }
+    const f = document.createElement('iframe');
+    f.src = 'https://www.youtube-nocookie.com/embed/wV1FrqwZyKw?autoplay=1&playsinline=1&rel=0';
+    f.title = 'Lady Gaga - Born This Way (Official Music Video)';
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    screen.appendChild(f); player.hidden = false; midi.setAttribute('aria-expanded', 'true');
   });
-
-  // "MIDI" toggle: an original 8-bar chiptune loop made with Web Audio. Off by default;
-  // the AudioContext is only created after the user taps the button.
-  let ctx = null, timer = null, step = 0;
-  const notes = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 988, 784, 659, 587];
-  const bass = [131, 131, 175, 175, 147, 147, 196, 196];
-  const beep = (f, t, len, type, vol) => {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type; o.frequency.value = f;
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + len);
-  };
-  const tick = () => {
-    const t = ctx.currentTime + 0.02;
-    beep(notes[step % 16], t, 0.18, 'square', 0.05);
-    if (step % 2 === 0) beep(bass[(step / 2) % 8], t, 0.3, 'triangle', 0.08);
-    step++;
-  };
-  const btn = $('#midi'), state = $('#midiState');
-  btn.addEventListener('click', () => {
-    const on = btn.getAttribute('aria-pressed') !== 'true';
-    btn.setAttribute('aria-pressed', on); state.textContent = on ? 'ON' : 'OFF';
-    if (on) {
-      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-      ctx.resume(); timer = setInterval(tick, 200);
-    } else { clearInterval(timer); }
-  });
+  $('#playerClose').addEventListener('click', closePlayer);
 })();
