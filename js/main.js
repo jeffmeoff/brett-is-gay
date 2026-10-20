@@ -76,8 +76,8 @@
   midi.addEventListener('click', () => {
     if (!player.hidden) { closePlayer(); return; }
     const f = document.createElement('iframe');
-    f.src = 'https://www.youtube-nocookie.com/embed/wV1FrqwZyKw?autoplay=1&playsinline=1&rel=0';
-    f.title = 'Lady Gaga - Born This Way (Official Music Video)';
+    f.src = 'https://www.youtube-nocookie.com/embed/sskP6PSfP1M?autoplay=1&playsinline=1&rel=0';
+    f.title = 'Lady Gaga - Born This Way (Official Audio)';
     f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
     f.referrerPolicy = 'strict-origin-when-cross-origin';
     screen.appendChild(f); player.hidden = false; midi.setAttribute('aria-expanded', 'true');
