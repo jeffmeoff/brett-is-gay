@@ -45,9 +45,9 @@ kbd{font:700 .8em var(--mono);background:var(--silver);color:#000;padding:0 4px;
 main{display:grid;gap:18px}
 
 /* ---------- masthead ---------- */
-.masthead{text-align:center;position:relative;padding:8px 0 4px}
-.masthead__pre{margin:0;font:italic 700 1.1rem var(--times);color:#ff99ff}
-.wordart{margin:.1em 0 .15em;font:900 clamp(2.4rem,13vw,4.6rem)/0.95 Impact,"Arial Black",var(--verdana);letter-spacing:.01em;transform:skewY(-4deg) ;}
+.masthead{text-align:center;position:relative;padding:22px 0 12px}
+.masthead__pre{margin:0;font:italic 700 clamp(1.5rem,7vw,2.3rem) var(--times);color:#ff99ff;text-shadow:2px 2px 0 #000}
+.wordart{margin:.1em 0 .15em;font:900 clamp(3.4rem,18.5vw,7rem)/0.92 Impact,"Arial Black",var(--verdana);letter-spacing:.01em;transform:skewY(-4deg) ;}
 .wordart span{
   background:var(--rainbow);-webkit-background-clip:text;background-clip:text;color:transparent;
   -webkit-text-stroke:2px #000;paint-order:stroke fill;
@@ -58,7 +58,7 @@ main{display:grid;gap:18px}
 .wordart__c{font-size:.55em}
 .nowrap{white-space:nowrap}
 .wordart .nowrap{background:none;-webkit-text-stroke:0;filter:none}
-.masthead__sub{margin:.4rem 0 .8rem;font:1rem var(--comic);color:#aff}
+.masthead__sub{margin:.7rem 0 1rem;font:clamp(1.05rem,4.2vw,1.3rem) var(--comic);color:#aff}
 .masthead__row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center}
 .construction{width:176px;height:52px}
 .construction__light{animation:blink 1s steps(1) infinite}
@@ -160,11 +160,12 @@ main{display:grid;gap:18px}
 }
 @media (min-width:900px){
   .page{max-width:960px;padding-top:20px}
-  main{grid-template-columns:1.1fr 1fr;grid-template-areas:"welcome help" "welcome help" "album album" "games games" "guest guest"}
+  main{grid-template-columns:1.1fr 1fr;grid-template-areas:"welcome welcome" "album album" "games games" "guest guest" "help help"}
   .box--welcome{grid-area:welcome}.box--help{grid-area:help}
   .box--album{grid-area:album}.win{grid-area:games}.box--guest{grid-area:guest;text-align:center}
     .games{grid-template-columns:repeat(3,1fr)}
   .midi{position:absolute;top:8px;right:0;margin:0}
+  .gb-iframe{height:1600px}
 }
 
 /* ---------- accessibility: motion ---------- */
@@ -204,4 +205,4 @@ button.btn98.game{width:100%}
 .counter__label--sm{margin-top:4px;font-size:.78rem}
 .counter__digits--sm{font-size:1rem;letter-spacing:.14em}
 .gb-win{margin-top:14px;text-align:left}
-.gb-iframe{display:block;width:100%;height:600px;border:0;background:#fff}
+.gb-iframe{display:block;width:100%;height:max(1400px,180vh);border:0;background:#fff}
