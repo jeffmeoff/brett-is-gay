@@ -33,11 +33,14 @@
       if (!isNaN(n) && el) el.textContent = String(n).padStart(pad, '0');
     })
     .catch(() => {});
-  gc('', $('#hits'), 7);
-  // "This month": from the 1st of the current month, in the visitor's local time
+  // GoatCounter's TOTAL only counts reliably with an explicit start AND end date
   const now = new Date();
+  const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const end = ymd(new Date(now.getTime() + 2 * 864e5));
+  gc('?start=2026-10-19&end=' + end, $('#hits'), 7);
+  // "This month": from the 1st of the current month, in the visitor's local time
   const m1 = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01';
-  gc('?start=' + m1, $('#hitsMonth'), 5);
+  gc('?start=' + m1 + '&end=' + end, $('#hitsMonth'), 5);
 
   // Email: assembled at runtime so scrapers don't see a plain address in the HTML
   const mail = $('#mail');

@@ -1,7 +1,7 @@
 {
   "name": "brettisgay.com",
   "short_name": "Brett",
-  "description": "Brett's Totally Rad Homepage: photos, games and a guestbook.",
+  "description": "Brett's Totally Rad Homepage: photos, games and comments.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
